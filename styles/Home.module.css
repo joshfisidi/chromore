@@ -1,168 +1,322 @@
 .page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
-
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-
-  display: grid;
-  grid-template-rows: 20px 1fr 20px;
-  align-items: center;
-  justify-items: center;
-  min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
-  font-family: var(--font-geist-sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
-  }
+  min-height: 100vh;
+  padding: 72px 32px 96px;
+  background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 55%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 45%),
+    #020617;
+  color: #e2e8f0;
 }
 
 .main {
+  margin: 0 auto;
+  width: min(1160px, 100%);
   display: flex;
   flex-direction: column;
   gap: 32px;
-  grid-row-start: 2;
 }
 
-.main ol {
-  font-family: var(--font-geist-mono);
-  padding-left: 0;
-  margin: 0;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: -0.01em;
-  list-style-position: inside;
-}
-
-.main li:not(:last-of-type) {
-  margin-bottom: 8px;
-}
-
-.main code {
-  font-family: inherit;
-  background: var(--gray-alpha-100);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-.ctas {
+.header {
   display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.ctas a {
-  appearance: none;
-  border-radius: 128px;
-  height: 48px;
-  padding: 0 20px;
-  border: none;
-  border: 1px solid transparent;
-  transition:
-    background 0.2s,
-    color 0.2s,
-    border-color 0.2s;
-  cursor: pointer;
-  display: flex;
+.header h1 {
+  font-size: clamp(2rem, 3vw + 0.5rem, 3rem);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.header p {
+  max-width: 620px;
+  font-size: 1.05rem;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.tag {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
-  font-weight: 500;
-}
-
-a.primary {
-  background: var(--foreground);
-  color: var(--background);
   gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a5b4fc;
 }
 
-a.secondary {
-  border-color: var(--gray-alpha-200);
-  min-width: 158px;
+.timeframe {
+  font-family: var(--font-geist-mono);
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
 }
 
-.footer {
-  grid-row-start: 3;
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.metricCard {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 20px;
+  padding: 20px 24px;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+}
+
+.metricLabel {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.95);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metricValue {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.metricChange {
+  font-size: 0.95rem;
+  color: rgba(129, 140, 248, 0.9);
+}
+
+.visualGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
 }
 
-.footer a {
+.chartCard {
+  position: relative;
+  background: rgba(15, 23, 42, 0.72);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 24px 28px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.45);
 }
 
-.footer img {
-  flex-shrink: 0;
+.chartHeader h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-/* Enable hover only on non-touch devices */
-@media (hover: hover) and (pointer: fine) {
-  a.primary:hover {
-    background: var(--button-primary-hover);
-    border-color: transparent;
-  }
-
-  a.secondary:hover {
-    background: var(--button-secondary-hover);
-    border-color: transparent;
-  }
-
-  .footer a:hover {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
+.chartHeader p {
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.85);
 }
 
-@media (max-width: 600px) {
+.chartCanvas {
+  position: relative;
+  width: 100%;
+  height: 280px;
+}
+
+.chartCanvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.8);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 41, 59, 0.4),
+    rgba(30, 41, 59, 0.2)
+  );
+  border-radius: 16px;
+}
+
+.detailsGrid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+}
+
+.tableCard {
+  background: rgba(15, 23, 42, 0.76);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 28px;
+  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.45);
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.tableHeader h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.tableHeader p {
+  font-size: 0.95rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead th {
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.75);
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.55);
+}
+
+.table tbody td {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  font-size: 0.95rem;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.table tbody td:nth-child(3),
+.table tbody td:nth-child(4) {
+  font-family: var(--font-geist-mono);
+  font-size: 0.9rem;
+}
+
+.table tbody td:last-child {
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.urlTitle {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.urlDomain {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.8);
+  font-family: var(--font-geist-mono);
+}
+
+.highlights {
+  background: rgba(15, 23, 42, 0.76);
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  padding: 28px;
+  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.highlights h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.highlights ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.highlights li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(30, 41, 59, 0.55);
+}
+
+.highlights li[data-status="positive"] {
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.highlights li[data-status="warning"] {
+  border-color: rgba(248, 113, 113, 0.38);
+}
+
+.highlightTitle {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.highlightDetail {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.88);
+}
+
+@media (max-width: 1200px) {
   .page {
-    padding: 32px;
-    padding-bottom: 80px;
+    padding: 64px 24px 88px;
   }
 
-  .main {
-    align-items: center;
-  }
-
-  .main ol {
-    text-align: center;
-  }
-
-  .ctas {
-    flex-direction: column;
-  }
-
-  .ctas a {
-    font-size: 14px;
-    height: 40px;
-    padding: 0 16px;
-  }
-
-  a.secondary {
-    min-width: auto;
-  }
-
-  .footer {
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
+  .visualGrid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
+@media (max-width: 900px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartCanvas {
+    height: 240px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 48px 18px 72px;
+  }
+
+  .header p {
+    font-size: 0.95rem;
+  }
+
+  .metricValue {
+    font-size: 1.5rem;
+  }
+
+  .chartCard {
+    padding: 20px;
+  }
+
+  .table tbody td {
+    font-size: 0.9rem;
   }
 }
