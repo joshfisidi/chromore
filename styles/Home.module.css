@@ -21,6 +21,14 @@
   gap: 16px;
 }
 
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
 .header h1 {
   font-size: clamp(2rem, 3vw + 0.5rem, 3rem);
   font-weight: 600;
@@ -47,10 +55,57 @@
   color: #a5b4fc;
 }
 
+.timeframeToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.timeframeToggle button {
+  border: none;
+  background: transparent;
+  color: rgba(203, 213, 225, 0.85);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.timeframeToggle button[data-active="true"] {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(56, 189, 248, 0.85));
+  color: #0f172a;
+  box-shadow: 0 12px 24px rgba(56, 189, 248, 0.25);
+}
+
+.timeframeToggle button:not([data-active="true"]):hover {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
 .timeframe {
   font-family: var(--font-geist-mono);
   font-size: 0.85rem;
   color: rgba(148, 163, 184, 0.9);
+}
+
+.timeframeDescription {
+  flex: 1;
+  min-width: 240px;
+  color: rgba(148, 163, 184, 0.85);
+  font-size: 0.9rem;
 }
 
 .summaryGrid {
@@ -160,8 +215,10 @@
 
 .tableHeader {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
   margin-bottom: 18px;
 }
 
@@ -173,6 +230,39 @@
 .tableHeader p {
   font-size: 0.95rem;
   color: rgba(148, 163, 184, 0.85);
+}
+
+.tableControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.field input,
+.field select {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  min-width: 200px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .table {
@@ -214,6 +304,12 @@
 
 .table tbody td:last-child {
   color: rgba(148, 163, 184, 0.85);
+}
+
+.emptyRow {
+  text-align: center;
+  padding: 32px 0;
+  color: rgba(148, 163, 184, 0.7);
 }
 
 .urlTitle {
@@ -294,6 +390,11 @@
     grid-template-columns: 1fr;
   }
 
+  .headerTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .chartCanvas {
     height: 240px;
   }
@@ -314,6 +415,16 @@
 
   .chartCard {
     padding: 20px;
+  }
+
+  .tableControls {
+    width: 100%;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    min-width: unset;
   }
 
   .table tbody td {

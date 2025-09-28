@@ -66,6 +66,219 @@ type Highlight = {
   status: "positive" | "neutral" | "warning";
 };
 
+type CategorySlice = {
+  label: string;
+  minutes: number;
+  color: string;
+};
+
+type TimeframeKey = "week" | "month";
+
+type TimeframeData = {
+  label: string;
+  rangeLabel: string;
+  description: string;
+  dailyUsage: DailyUsage[];
+  urlVisits: UrlVisit[];
+  categoryBreakdown: CategorySlice[];
+  highlights: Highlight[];
+};
+
+const TIMEFRAME_DATA: Record<TimeframeKey, TimeframeData> = {
+  week: {
+    label: "This week",
+    rangeLabel: "Week of Nov 18",
+    description:
+      "Review how your focus and tab discipline evolved each day of the current week.",
+    dailyUsage: [
+      { day: "Mon", date: "Nov 18", minutes: 142, tabs: 34, focus: 76 },
+      { day: "Tue", date: "Nov 19", minutes: 168, tabs: 41, focus: 71 },
+      { day: "Wed", date: "Nov 20", minutes: 154, tabs: 38, focus: 74 },
+      { day: "Thu", date: "Nov 21", minutes: 179, tabs: 45, focus: 69 },
+      { day: "Fri", date: "Nov 22", minutes: 201, tabs: 52, focus: 64 },
+      { day: "Sat", date: "Nov 23", minutes: 128, tabs: 29, focus: 82 },
+      { day: "Sun", date: "Nov 24", minutes: 96, tabs: 22, focus: 88 },
+    ],
+    urlVisits: [
+      {
+        domain: "mail.google.com",
+        title: "Gmail",
+        visits: 19,
+        minutes: 114,
+        category: "Communication",
+        lastOpened: "Today · 9:12 AM",
+      },
+      {
+        domain: "calendar.google.com",
+        title: "Google Calendar",
+        visits: 12,
+        minutes: 86,
+        category: "Productivity",
+        lastOpened: "Today · 8:45 AM",
+      },
+      {
+        domain: "github.com",
+        title: "GitHub",
+        visits: 17,
+        minutes: 142,
+        category: "Development",
+        lastOpened: "Yesterday · 6:32 PM",
+      },
+      {
+        domain: "news.ycombinator.com",
+        title: "Hacker News",
+        visits: 9,
+        minutes: 58,
+        category: "Research",
+        lastOpened: "Yesterday · 9:18 PM",
+      },
+      {
+        domain: "notion.so",
+        title: "Notion workspace",
+        visits: 14,
+        minutes: 121,
+        category: "Knowledge base",
+        lastOpened: "Thu · 3:04 PM",
+      },
+      {
+        domain: "figma.com",
+        title: "Figma",
+        visits: 7,
+        minutes: 64,
+        category: "Design",
+        lastOpened: "Wed · 4:27 PM",
+      },
+    ],
+    categoryBreakdown: [
+      { label: "Productivity", minutes: 428, color: "#38bdf8" },
+      { label: "Development", minutes: 312, color: "#6366f1" },
+      { label: "Research", minutes: 204, color: "#f472b6" },
+      { label: "Entertainment", minutes: 126, color: "#facc15" },
+      { label: "Other", minutes: 92, color: "#94a3b8" },
+    ],
+    highlights: [
+      {
+        title: "Deep work streak",
+        detail: "2h 55m focused session on Thu",
+        status: "positive",
+      },
+      {
+        title: "Tab discipline",
+        detail: "Average of 37 tabs per day",
+        status: "neutral",
+      },
+      {
+        title: "Weekend cooldown",
+        detail: "Usage down 52% on Sunday",
+        status: "warning",
+      },
+    ],
+  },
+  month: {
+    label: "Last 4 weeks",
+    rangeLabel: "Nov 1 – Nov 28",
+    description:
+      "Zoom out to compare weekly totals and see how your focus trended across the month.",
+    dailyUsage: [
+      { day: "Week 1", date: "Nov 1 – 7", minutes: 986, tabs: 248, focus: 72 },
+      { day: "Week 2", date: "Nov 8 – 14", minutes: 1042, tabs: 265, focus: 70 },
+      { day: "Week 3", date: "Nov 15 – 21", minutes: 1116, tabs: 281, focus: 68 },
+      { day: "Week 4", date: "Nov 22 – 28", minutes: 994, tabs: 243, focus: 74 },
+    ],
+    urlVisits: [
+      {
+        domain: "mail.google.com",
+        title: "Gmail",
+        visits: 78,
+        minutes: 482,
+        category: "Communication",
+        lastOpened: "Today · 9:12 AM",
+      },
+      {
+        domain: "calendar.google.com",
+        title: "Google Calendar",
+        visits: 49,
+        minutes: 368,
+        category: "Productivity",
+        lastOpened: "Today · 8:45 AM",
+      },
+      {
+        domain: "github.com",
+        title: "GitHub",
+        visits: 66,
+        minutes: 587,
+        category: "Development",
+        lastOpened: "Yesterday · 6:32 PM",
+      },
+      {
+        domain: "docs.google.com",
+        title: "Project doc",
+        visits: 41,
+        minutes: 312,
+        category: "Documentation",
+        lastOpened: "Yesterday · 4:18 PM",
+      },
+      {
+        domain: "news.ycombinator.com",
+        title: "Hacker News",
+        visits: 34,
+        minutes: 236,
+        category: "Research",
+        lastOpened: "Tue · 9:58 PM",
+      },
+      {
+        domain: "linear.app",
+        title: "Linear tasks",
+        visits: 37,
+        minutes: 274,
+        category: "Productivity",
+        lastOpened: "Tue · 3:21 PM",
+      },
+      {
+        domain: "youtube.com",
+        title: "Design reviews",
+        visits: 22,
+        minutes: 198,
+        category: "Learning",
+        lastOpened: "Mon · 10:07 PM",
+      },
+      {
+        domain: "notion.so",
+        title: "Team wiki",
+        visits: 43,
+        minutes: 356,
+        category: "Knowledge base",
+        lastOpened: "Sun · 11:48 AM",
+      },
+    ],
+    categoryBreakdown: [
+      { label: "Productivity", minutes: 1812, color: "#38bdf8" },
+      { label: "Development", minutes: 1584, color: "#6366f1" },
+      { label: "Research", minutes: 944, color: "#f472b6" },
+      { label: "Learning", minutes: 668, color: "#facc15" },
+      { label: "Documentation", minutes: 312, color: "#34d399" },
+      { label: "Other", minutes: 286, color: "#94a3b8" },
+    ],
+    highlights: [
+      {
+        title: "Focus rebound",
+        detail: "Week 4 focus climbed back to 74%",
+        status: "positive",
+      },
+      {
+        title: "GitHub heavy",
+        detail: "Nearly 10 hours spent reviewing pull requests",
+        status: "neutral",
+      },
+      {
+        title: "Docs surge",
+        detail: "Documentation time up 26% versus last month",
+        status: "warning",
+      },
+    ],
+  },
+};
+
 type DoughnutTooltipContext = {
   label?: string;
   parsed: number;
@@ -151,83 +364,45 @@ const Highlights = ({ items }: { items: Highlight[] }) => (
 export default function Home() {
   const [isChartReady, setIsChartReady] = useState(false);
 
-  const dailyUsage = useMemo<DailyUsage[]>(
-    () => [
-      { day: "Mon", date: "Nov 18", minutes: 142, tabs: 34, focus: 76 },
-      { day: "Tue", date: "Nov 19", minutes: 168, tabs: 41, focus: 71 },
-      { day: "Wed", date: "Nov 20", minutes: 154, tabs: 38, focus: 74 },
-      { day: "Thu", date: "Nov 21", minutes: 179, tabs: 45, focus: 69 },
-      { day: "Fri", date: "Nov 22", minutes: 201, tabs: 52, focus: 64 },
-      { day: "Sat", date: "Nov 23", minutes: 128, tabs: 29, focus: 82 },
-      { day: "Sun", date: "Nov 24", minutes: 96, tabs: 22, focus: 88 },
-    ],
+  const [timeframe, setTimeframe] = useState<TimeframeKey>("week");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
+  const timeframeData = useMemo(() => TIMEFRAME_DATA[timeframe], [timeframe]);
+
+  const timeframeOptions = useMemo(
+    () => Object.entries(TIMEFRAME_DATA) as [TimeframeKey, TimeframeData][],
     []
   );
 
-  const urlVisits = useMemo<UrlVisit[]>(
-    () => [
-      {
-        domain: "mail.google.com",
-        title: "Gmail",
-        visits: 19,
-        minutes: 114,
-        category: "Communication",
-        lastOpened: "Today · 9:12 AM",
-      },
-      {
-        domain: "calendar.google.com",
-        title: "Google Calendar",
-        visits: 12,
-        minutes: 86,
-        category: "Productivity",
-        lastOpened: "Today · 8:45 AM",
-      },
-      {
-        domain: "github.com",
-        title: "GitHub",
-        visits: 17,
-        minutes: 142,
-        category: "Development",
-        lastOpened: "Yesterday · 6:32 PM",
-      },
-      {
-        domain: "news.ycombinator.com",
-        title: "Hacker News",
-        visits: 9,
-        minutes: 58,
-        category: "Research",
-        lastOpened: "Yesterday · 9:18 PM",
-      },
-      {
-        domain: "notion.so",
-        title: "Notion workspace",
-        visits: 14,
-        minutes: 121,
-        category: "Knowledge base",
-        lastOpened: "Thu · 3:04 PM",
-      },
-      {
-        domain: "figma.com",
-        title: "Figma",
-        visits: 7,
-        minutes: 64,
-        category: "Design",
-        lastOpened: "Wed · 4:27 PM",
-      },
-    ],
-    []
+  const dailyUsage = timeframeData.dailyUsage;
+  const urlVisits = timeframeData.urlVisits;
+  const categoryBreakdown = timeframeData.categoryBreakdown;
+  const highlights = timeframeData.highlights;
+  const timeframeRangeLabel = timeframeData.rangeLabel;
+  const timeframeDescription = timeframeData.description;
+
+  useEffect(() => {
+    setCategoryFilter("all");
+    setSearchTerm("");
+  }, [timeframe]);
+
+  const categories = useMemo(
+    () => ["all", ...new Set(urlVisits.map((visit) => visit.category))],
+    [urlVisits]
   );
 
-  const categoryBreakdown = useMemo(
-    () => [
-      { label: "Productivity", minutes: 428, color: "#38bdf8" },
-      { label: "Development", minutes: 312, color: "#6366f1" },
-      { label: "Research", minutes: 204, color: "#f472b6" },
-      { label: "Entertainment", minutes: 126, color: "#facc15" },
-      { label: "Other", minutes: 92, color: "#94a3b8" },
-    ],
-    []
-  );
+  const filteredVisits = useMemo(() => {
+    return urlVisits.filter((visit) => {
+      const matchesCategory =
+        categoryFilter === "all" || visit.category === categoryFilter;
+      const matchesQuery = searchTerm
+        ? `${visit.title} ${visit.domain}`.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+
+      return matchesCategory && matchesQuery;
+    });
+  }, [categoryFilter, searchTerm, urlVisits]);
 
   const totalMinutes = useMemo(
     () => dailyUsage.reduce((sum, day) => sum + day.minutes, 0),
@@ -485,26 +660,18 @@ export default function Home() {
     [categoryBreakdown]
   );
 
-  const highlights = useMemo<Highlight[]>(
-    () => [
-      {
-        title: "Deep work streak",
-        detail: "2h 55m focused session on Thu",
-        status: "positive",
-      },
-      {
-        title: "Tab discipline",
-        detail: "Average of 37 tabs per day",
-        status: "neutral",
-      },
-      {
-        title: "Weekend cooldown",
-        detail: "Usage down 52% on Sunday",
-        status: "warning",
-      },
-    ],
-    []
-  );
+  const usageSubtitle =
+    timeframe === "week"
+      ? "Daily breakdown of minutes spent in Chrome"
+      : "Weekly totals across the last four weeks";
+
+  const tabsSubtitle =
+    timeframe === "week"
+      ? "Counts include new and restored tabs"
+      : "Total tabs opened for each recorded week";
+
+  const timeframeTag =
+    timeframe === "week" ? "Weekly Chrome insights" : "Monthly Chrome insights";
 
   return (
     <>
@@ -521,15 +688,32 @@ export default function Home() {
       <div className={`${styles.page} ${geistSans.variable} ${geistMono.variable}`}>
         <main className={styles.main}>
           <header className={styles.header}>
-            <div>
-              <span className={styles.tag}>Weekly Chrome insights</span>
-              <h1>Usage snapshot</h1>
+            <div className={styles.headerTop}>
+              <div>
+                <span className={styles.tag}>{timeframeTag}</span>
+                <h1>Usage control center</h1>
+              </div>
+              <div className={styles.timeframeToggle} role="group" aria-label="Select time range">
+                {timeframeOptions.map(([key, option]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTimeframe(key)}
+                    data-active={timeframe === key}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <p>
-              Understand how Chrome is used across the week. Monitor active time, track how many
-              tabs were opened, and review the domains that claimed the most attention.
+              Explore the interactive charts, filters, and highlights to understand how browsing
+              habits shift over time and which sites drive your focus.
             </p>
-            <div className={styles.timeframe}>Week of Nov 18 · Local timezone</div>
+            <div className={styles.metaRow}>
+              <div className={styles.timeframe}>{timeframeRangeLabel} · Local timezone</div>
+              <div className={styles.timeframeDescription}>{timeframeDescription}</div>
+            </div>
           </header>
 
           <section className={styles.summaryGrid}>
@@ -541,13 +725,13 @@ export default function Home() {
           <section className={styles.visualGrid}>
             <ChartCard
               title="Active time vs. focus"
-              subtitle="Daily breakdown of minutes spent in Chrome"
+              subtitle={usageSubtitle}
               config={usageTrendConfig}
               ready={isChartReady}
             />
             <ChartCard
-              title="Tabs opened each day"
-              subtitle="Counts include new and restored tabs"
+              title={timeframe === "week" ? "Tabs opened each day" : "Tabs opened each week"}
+              subtitle={tabsSubtitle}
               config={tabsConfig}
               ready={isChartReady}
             />
@@ -562,8 +746,34 @@ export default function Home() {
           <section className={styles.detailsGrid}>
             <div className={styles.tableCard}>
               <div className={styles.tableHeader}>
-                <h3>Most visited URLs</h3>
-                <p>Sorted by time on page</p>
+                <div>
+                  <h3>Most visited URLs</h3>
+                  <p>Sorted by time on page</p>
+                </div>
+                <div className={styles.tableControls}>
+                  <label className={styles.field}>
+                    <span>Search</span>
+                    <input
+                      type="search"
+                      placeholder="Filter titles or domains"
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                    />
+                  </label>
+                  <label className={styles.field}>
+                    <span>Category</span>
+                    <select
+                      value={categoryFilter}
+                      onChange={(event) => setCategoryFilter(event.target.value)}
+                    >
+                      {categories.map((category) => (
+                        <option value={category} key={category}>
+                          {category === "all" ? "All" : category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
               <table className={styles.table}>
                 <thead>
@@ -576,18 +786,26 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {urlVisits.map((visit) => (
-                    <tr key={visit.domain}>
-                      <td>
-                        <span className={styles.urlTitle}>{visit.title}</span>
-                        <span className={styles.urlDomain}>{visit.domain}</span>
+                  {filteredVisits.length > 0 ? (
+                    filteredVisits.map((visit) => (
+                      <tr key={`${visit.domain}-${visit.title}`}>
+                        <td>
+                          <span className={styles.urlTitle}>{visit.title}</span>
+                          <span className={styles.urlDomain}>{visit.domain}</span>
+                        </td>
+                        <td>{visit.category}</td>
+                        <td>{visit.visits}</td>
+                        <td>{formatDuration(visit.minutes)}</td>
+                        <td>{visit.lastOpened}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td className={styles.emptyRow} colSpan={5}>
+                        No URLs match your filters yet.
                       </td>
-                      <td>{visit.category}</td>
-                      <td>{visit.visits}</td>
-                      <td>{formatDuration(visit.minutes)}</td>
-                      <td>{visit.lastOpened}</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
