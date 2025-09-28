@@ -1,374 +1,110 @@
 .page {
   min-height: 100vh;
-  padding: 72px 32px 96px;
-  background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.18), transparent 55%),
-    radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 45%),
+  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 45%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.18), transparent 40%),
     #020617;
   color: #e2e8f0;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  padding: 48px 0 72px;
 }
 
-.main {
+.viewport {
+  width: min(1120px, calc(100% - 48px));
   margin: 0 auto;
-  width: min(1160px, 100%);
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 32px;
 }
 
 .header {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-}
-
-.headerTop {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 24px;
-  flex-wrap: wrap;
 }
 
-.header h1 {
-  font-size: clamp(2rem, 3vw + 0.5rem, 3rem);
-  font-weight: 600;
-  line-height: 1.1;
+.headerContent {
+  display: grid;
+  gap: 12px;
 }
 
-.header p {
-  max-width: 620px;
-  font-size: 1.05rem;
-  color: rgba(226, 232, 240, 0.82);
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
+.eyebrow {
   text-transform: uppercase;
-  color: #a5b4fc;
-}
-
-.timeframeToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.timeframeToggle button {
-  border: none;
-  background: transparent;
-  color: rgba(203, 213, 225, 0.85);
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.timeframeToggle button[data-active="true"] {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(56, 189, 248, 0.85));
-  color: #0f172a;
-  box-shadow: 0 12px 24px rgba(56, 189, 248, 0.25);
-}
-
-.timeframeToggle button:not([data-active="true"]):hover {
-  background: rgba(30, 41, 59, 0.8);
-}
-
-.metaRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 24px;
-}
-
-.timeframe {
-  font-family: var(--font-geist-mono);
-  font-size: 0.85rem;
-  color: rgba(148, 163, 184, 0.9);
-}
-
-.timeframeDescription {
-  flex: 1;
-  min-width: 240px;
-  color: rgba(148, 163, 184, 0.85);
-  font-size: 0.9rem;
-}
-
-.summaryGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.drilldownSection {
-  background: rgba(15, 23, 42, 0.78);
-  border-radius: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 28px;
-  box-shadow: 0 28px 56px rgba(15, 23, 42, 0.45);
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.drilldownHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px 24px;
-}
-
-.drilldownHeader h3 {
-  font-size: 1.35rem;
-  font-weight: 600;
-}
-
-.drilldownHeader p {
-  margin-top: 6px;
-  color: rgba(148, 163, 184, 0.85);
-  max-width: 520px;
-}
-
-.drilldownNav {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(15, 23, 42, 0.8);
-  border-radius: 999px;
-  padding: 6px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.drilldownNav button {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(30, 41, 59, 0.8);
-  color: #cbd5f5;
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.drilldownNav button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.drilldownNav button:not(:disabled):hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(56, 189, 248, 0.85));
-  color: #0f172a;
-  transform: translateY(-1px);
-}
-
-.drilldownBody {
-  display: grid;
-  gap: 28px;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  align-items: start;
-}
-
-.drilldownList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-}
-
-.drilldownList li button {
-  width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 18px;
-  background: rgba(15, 23, 42, 0.7);
-  color: #e2e8f0;
-  padding: 16px;
-  display: grid;
-  gap: 6px;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-}
-
-.drilldownList li button:hover {
-  transform: translateY(-2px);
-}
-
-.drilldownList li button[data-active="true"] {
-  border-color: rgba(56, 189, 248, 0.55);
-  background: linear-gradient(150deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.16));
-  box-shadow: 0 20px 36px rgba(15, 23, 42, 0.4);
-}
-
-.drilldownDay {
-  font-weight: 600;
-}
-
-.drilldownDate {
-  font-size: 0.85rem;
-  color: rgba(148, 163, 184, 0.85);
-}
-
-.drilldownMinutes {
-  font-family: var(--font-geist-mono);
-  font-size: 0.9rem;
-  color: #a5b4fc;
-}
-
-.drilldownFocus,
-.drilldownTabs {
-  font-size: 0.8rem;
-  color: rgba(148, 163, 184, 0.8);
-}
-
-.drilldownDetails {
-  background: rgba(15, 23, 42, 0.82);
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.08);
-}
-
-.drilldownDetailsHeader {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.drilldownDetailsLabel {
+  letter-spacing: 0.3em;
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(148, 163, 184, 0.7);
-}
-
-.drilldownDetailsHeader h4 {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.drilldownDetailsHeader h4 span {
-  font-size: 1rem;
-  color: rgba(148, 163, 184, 0.8);
-  font-weight: 500;
-}
-
-.drilldownBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(56, 189, 248, 0.18);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  font-size: 0.85rem;
-  color: #38bdf8;
-  font-family: var(--font-geist-mono);
-}
-
-.drilldownMetrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
-}
-
-.drilldownMetric {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.68);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.drilldownMetricLabel {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: rgba(148, 163, 184, 0.75);
 }
 
-.drilldownMetricValue {
-  font-size: 1.4rem;
+.title {
+  font-size: clamp(2.25rem, 4vw, 3rem);
   font-weight: 600;
   color: #f8fafc;
 }
 
-.drilldownMetricDetail {
-  font-size: 0.85rem;
-  color: rgba(148, 163, 184, 0.85);
+.subtitle {
+  font-size: 1.05rem;
+  color: rgba(203, 213, 225, 0.86);
+  max-width: 52ch;
+  line-height: 1.6;
 }
 
-.drilldownInsights {
-  display: flex;
-  flex-direction: column;
+.timeframeBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
-.drilldownInsights h5 {
-  font-size: 0.95rem;
+.timeframeButton {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.65);
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: left;
+  color: inherit;
+  display: grid;
+  gap: 4px;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeframeButton:hover {
+  border-color: rgba(148, 163, 184, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.35);
+}
+
+.timeframeButtonActive {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(79, 70, 229, 0.16));
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.45);
+}
+
+.timeframeLabel {
   font-weight: 600;
+  color: #f1f5f9;
 }
 
-.drilldownInsights ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0;
-  margin: 0;
+.timeframeRange {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.9);
 }
 
-.drilldownInsights li {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  font-size: 0.9rem;
-  color: rgba(226, 232, 240, 0.92);
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
-
 
 .metricCard {
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 20px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.6));
+  padding: 20px 22px;
+  display: grid;
+  gap: 10px;
 }
 
 .metricLabel {
-  font-size: 0.85rem;
-  color: rgba(148, 163, 184, 0.95);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.9);
 }
 
 .metricValue {
@@ -378,338 +114,429 @@
 }
 
 .metricChange {
-  font-size: 0.95rem;
-  color: rgba(129, 140, 248, 0.9);
+  font-size: 0.9rem;
+  font-family: var(--font-geist-mono), "Menlo", monospace;
+  padding: 6px 10px;
+  border-radius: 999px;
+  width: fit-content;
 }
 
-.visualGrid {
+.metricPositive {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.metricNegative {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+.metricNeutral {
+  background: rgba(148, 163, 184, 0.12);
+  color: rgba(203, 213, 225, 0.86);
+}
+
+.analyticsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-}
-
-.chartCard {
-  position: relative;
-  background: rgba(15, 23, 42, 0.72);
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  padding: 24px 28px;
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto auto;
   gap: 20px;
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.45);
 }
 
-.chartHeader h3 {
-  font-size: 1.35rem;
+.chartCard,
+.detailCard {
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(2, 6, 23, 0.6);
+  padding: 22px 24px;
+  display: grid;
+  gap: 16px;
+  position: relative;
+}
+
+.chartCard::after,
+.detailCard::after,
+.tableCard::after,
+.highlightCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.05))
+      border-box;
+  mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.chartHeader h2 {
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 4px;
+  color: #f1f5f9;
 }
 
 .chartHeader p {
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.85);
+  margin-top: 4px;
+}
+
+.selectedBadge {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  color: rgba(203, 213, 225, 0.86);
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.chartBody {
+  min-height: 260px;
+}
+
+.chartBody canvas {
+  width: 100% !important;
+  height: 240px !important;
+}
+
+.chartFallback {
+  display: grid;
+  place-items: center;
+  color: rgba(148, 163, 184, 0.7);
+  height: 100%;
   font-size: 0.95rem;
+}
+
+.detailCard {
+  grid-row: span 2;
+}
+
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.detailHeader h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.detailMeta {
+  display: grid;
+  text-align: right;
+  gap: 4px;
+  font-size: 0.85rem;
   color: rgba(148, 163, 184, 0.85);
 }
 
-.chartCanvas {
-  position: relative;
-  width: 100%;
-  height: 280px;
-}
-
-.chartCanvas canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-.loading {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+.detailContext {
   font-size: 0.95rem;
-  color: rgba(148, 163, 184, 0.8);
-  background: linear-gradient(
-    135deg,
-    rgba(30, 41, 59, 0.4),
-    rgba(30, 41, 59, 0.2)
-  );
-  border-radius: 16px;
+  color: rgba(203, 213, 225, 0.86);
+  line-height: 1.6;
 }
 
-.detailsGrid {
+.detailStats {
   display: grid;
-  gap: 24px;
-  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  text-align: center;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
-.tableCard {
-  background: rgba(15, 23, 42, 0.76);
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 28px;
-  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.45);
-  overflow: hidden;
+.detailStats dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.detailStats dd {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.dayPicker {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.dayButton {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.5);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+  text-align: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  color: inherit;
+}
+
+.dayButton:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.dayButtonActive {
+  border-color: rgba(56, 189, 248, 0.65);
+  background: rgba(56, 189, 248, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.3);
+}
+
+.dayLabel {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.dayValue {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.lowerGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.tableCard,
+.highlightCard {
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(2, 6, 23, 0.6);
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+  position: relative;
 }
 
 .tableHeader {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-end;
   gap: 16px;
-  margin-bottom: 18px;
+  flex-wrap: wrap;
 }
 
-.tableHeader h3 {
-  font-size: 1.2rem;
+.tableHeader h2 {
+  font-size: 1.1rem;
   font-weight: 600;
+  color: #f1f5f9;
 }
 
 .tableHeader p {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: rgba(148, 163, 184, 0.85);
 }
 
-.tableControls {
+.tableFilters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+  align-items: center;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: rgba(148, 163, 184, 0.75);
-}
-
-.field input,
-.field select {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+.searchInput,
+.categorySelect {
+  appearance: none;
   border-radius: 12px;
-  padding: 10px 12px;
-  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.65);
+  color: inherit;
+  padding: 10px 14px;
   font-size: 0.9rem;
-  font-family: inherit;
-  min-width: 200px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.field input:focus,
-.field select:focus {
+.searchInput:focus,
+.categorySelect:focus {
   outline: none;
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  border-color: rgba(56, 189, 248, 0.65);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+.tableScroll {
+  overflow: auto;
+  max-height: 360px;
+  border-radius: 16px;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 520px;
 }
 
-.table thead th {
+.table thead {
+  background: rgba(15, 23, 42, 0.6);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table th,
+.table td {
   text-align: left;
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(148, 163, 184, 0.75);
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.table tbody tr {
-  transition: background 0.2s ease;
-}
-
-.table tbody tr:hover {
-  background: rgba(30, 41, 59, 0.55);
-}
-
-.table tbody td {
-  padding: 14px 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
-  font-size: 0.95rem;
-  color: rgba(226, 232, 240, 0.9);
-}
-
-.table tbody td:nth-child(3),
-.table tbody td:nth-child(4) {
-  font-family: var(--font-geist-mono);
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   font-size: 0.9rem;
 }
 
-.table tbody td:last-child {
-  color: rgba(148, 163, 184, 0.85);
+.table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.4);
 }
 
-.emptyRow {
-  text-align: center;
-  padding: 32px 0;
-  color: rgba(148, 163, 184, 0.7);
-}
-
-.urlTitle {
-  display: block;
+.table th {
   font-weight: 500;
-  margin-bottom: 4px;
+  color: rgba(226, 232, 240, 0.9);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+
+.urlCell {
+  display: grid;
+  gap: 4px;
 }
 
 .urlDomain {
-  font-size: 0.8rem;
-  color: rgba(148, 163, 184, 0.8);
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-geist-mono), "Menlo", monospace;
+  font-size: 0.85rem;
+  color: #f8fafc;
 }
 
-.highlights {
-  background: rgba(15, 23, 42, 0.76);
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  padding: 28px;
-  box-shadow: 0 24px 52px rgba(15, 23, 42, 0.45);
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.urlTitle {
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.9);
 }
 
-.highlights h3 {
-  font-size: 1.2rem;
+.emptyState {
+  text-align: center;
+  padding: 36px 18px;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.highlightCard header h2 {
+  font-size: 1.1rem;
   font-weight: 600;
+  color: #f1f5f9;
 }
 
-.highlights ul {
+.highlightCard header p {
+  font-size: 0.9rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.highlightList {
   list-style: none;
-  display: flex;
-  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  display: grid;
   gap: 14px;
 }
 
-.highlights li {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
+.highlightItem {
+  padding: 16px 18px;
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(30, 41, 59, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.55);
+  display: grid;
+  gap: 6px;
 }
 
-.highlights li[data-status="positive"] {
-  border-color: rgba(74, 222, 128, 0.35);
+.highlightItem h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
 }
 
-.highlights li[data-status="warning"] {
-  border-color: rgba(248, 113, 113, 0.38);
+.highlightItem p {
+  font-size: 0.9rem;
+  color: rgba(203, 213, 225, 0.86);
+  line-height: 1.55;
 }
 
-.highlightTitle {
-  font-weight: 500;
-  font-size: 0.95rem;
+.highlightPositive {
+  box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.35);
 }
 
-.highlightDetail {
-  font-size: 0.85rem;
-  color: rgba(148, 163, 184, 0.88);
+.highlightWarning {
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.35);
 }
 
-@media (max-width: 1200px) {
-  .page {
-    padding: 64px 24px 88px;
-  }
+.highlightNeutral {
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
+}
 
-  .visualGrid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-
-  .drilldownBody {
+@media (max-width: 1024px) {
+  .analyticsGrid {
     grid-template-columns: 1fr;
   }
 
-  .drilldownList {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  .detailCard {
+    grid-row: auto;
+  }
+
+  .lowerGrid {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 900px) {
-  .detailsGrid {
+@media (max-width: 768px) {
+  .page {
+    padding: 36px 0 60px;
+  }
+
+  .viewport {
+    width: min(640px, calc(100% - 32px));
+  }
+
+  .timeframeBar {
     grid-template-columns: 1fr;
   }
 
-  .headerTop {
+  .metricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detailStats {
+    grid-template-columns: 1fr;
+  }
+
+  .tableFilters {
     flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .chartCanvas {
-    height: 240px;
-  }
-
-  .drilldownNav {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .drilldownList {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    overflow-x: auto;
-    padding-bottom: 6px;
-  }
-
-  .drilldownList li {
-    min-width: 200px;
+    align-items: stretch;
   }
 }
 
-@media (max-width: 600px) {
-  .drilldownSection {
-    padding: 22px;
+@media (max-width: 520px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
   }
 
-  .drilldownMetrics {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  .chartBody {
+    min-height: 220px;
   }
 
-  .drilldownDetailsHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .drilldownBadge {
-    margin-top: 8px;
-  }
-}
-
-@media (max-width: 640px) {
-  .page {
-    padding: 48px 18px 72px;
-  }
-
-  .header p {
-    font-size: 0.95rem;
-  }
-
-  .metricValue {
-    font-size: 1.5rem;
-  }
-
-  .chartCard {
-    padding: 20px;
-  }
-
-  .tableControls {
-    width: 100%;
-  }
-
-  .field input,
-  .field select {
-    width: 100%;
-    min-width: unset;
-  }
-
-  .table tbody td {
-    font-size: 0.9rem;
+  .chartBody canvas {
+    height: 200px !important;
   }
 }

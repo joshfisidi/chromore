@@ -1,18 +1,15 @@
 import Head from "next/head";
 import Script from "next/script";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import styles from "@/styles/Home.module.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 type ChartDataset = Record<string, unknown> & { data: number[] };
 
@@ -29,7 +26,10 @@ type ChartInstance = {
   destroy: () => void;
 };
 
-type ChartConstructor = new (ctx: HTMLCanvasElement, config: ChartConfig) => ChartInstance;
+type ChartConstructor = new (
+  ctx: HTMLCanvasElement,
+  config: ChartConfig
+) => ChartInstance;
 
 declare global {
   interface Window {
@@ -41,6 +41,7 @@ type Metric = {
   label: string;
   value: string;
   change: string;
+  trend: "up" | "down" | "neutral";
 };
 
 type DailyUsage = {
@@ -49,6 +50,8 @@ type DailyUsage = {
   minutes: number;
   tabs: number;
   focus: number;
+  topUrl: string;
+  context: string;
 };
 
 type UrlVisit = {
@@ -78,26 +81,99 @@ type TimeframeData = {
   label: string;
   rangeLabel: string;
   description: string;
+  metrics: Metric[];
   dailyUsage: DailyUsage[];
   urlVisits: UrlVisit[];
   categoryBreakdown: CategorySlice[];
   highlights: Highlight[];
 };
 
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 const TIMEFRAME_DATA: Record<TimeframeKey, TimeframeData> = {
   week: {
     label: "This week",
-    rangeLabel: "Week of Nov 18",
+    rangeLabel: "Nov 18 – Nov 24",
     description:
-      "Review how your focus and tab discipline evolved each day of the current week.",
+      "Track how your active time and focus shifted throughout the current week.",
+    metrics: [
+      { label: "Active time", value: "1,068 mins", change: "+12%", trend: "up" },
+      { label: "Average focus", value: "74", change: "–4 vs last week", trend: "down" },
+      { label: "Tabs opened", value: "261", change: "+7%", trend: "up" },
+      { label: "Unique sites", value: "86", change: "Stable", trend: "neutral" },
+    ],
     dailyUsage: [
-      { day: "Mon", date: "Nov 18", minutes: 142, tabs: 34, focus: 76 },
-      { day: "Tue", date: "Nov 19", minutes: 168, tabs: 41, focus: 71 },
-      { day: "Wed", date: "Nov 20", minutes: 154, tabs: 38, focus: 74 },
-      { day: "Thu", date: "Nov 21", minutes: 179, tabs: 45, focus: 69 },
-      { day: "Fri", date: "Nov 22", minutes: 201, tabs: 52, focus: 64 },
-      { day: "Sat", date: "Nov 23", minutes: 128, tabs: 29, focus: 82 },
-      { day: "Sun", date: "Nov 24", minutes: 96, tabs: 22, focus: 88 },
+      {
+        day: "Mon",
+        date: "Nov 18",
+        minutes: 142,
+        tabs: 34,
+        focus: 76,
+        topUrl: "github.com",
+        context: "Sprint planning and repo housekeeping dominated the morning.",
+      },
+      {
+        day: "Tue",
+        date: "Nov 19",
+        minutes: 168,
+        tabs: 41,
+        focus: 71,
+        topUrl: "calendar.google.com",
+        context: "Back-to-back meetings spiked tab churn in the afternoon.",
+      },
+      {
+        day: "Wed",
+        date: "Nov 20",
+        minutes: 154,
+        tabs: 38,
+        focus: 74,
+        topUrl: "notion.so",
+        context: "Documentation pass kept focus steady with fewer distractions.",
+      },
+      {
+        day: "Thu",
+        date: "Nov 21",
+        minutes: 179,
+        tabs: 45,
+        focus: 69,
+        topUrl: "news.ycombinator.com",
+        context: "Research spikes pushed down the focus score after lunch.",
+      },
+      {
+        day: "Fri",
+        date: "Nov 22",
+        minutes: 201,
+        tabs: 52,
+        focus: 64,
+        topUrl: "mail.google.com",
+        context: "Context switching during triage created the busiest day of the week.",
+      },
+      {
+        day: "Sat",
+        date: "Nov 23",
+        minutes: 128,
+        tabs: 29,
+        focus: 82,
+        topUrl: "figma.com",
+        context: "Side-project design jam delivered the week’s highest focus.",
+      },
+      {
+        day: "Sun",
+        date: "Nov 24",
+        minutes: 96,
+        tabs: 22,
+        focus: 88,
+        topUrl: "open.spotify.com",
+        context: "Light browsing with playlists before the upcoming sprint.",
+      },
     ],
     urlVisits: [
       {
@@ -148,6 +224,14 @@ const TIMEFRAME_DATA: Record<TimeframeKey, TimeframeData> = {
         category: "Design",
         lastOpened: "Wed · 4:27 PM",
       },
+      {
+        domain: "open.spotify.com",
+        title: "Spotify",
+        visits: 10,
+        minutes: 49,
+        category: "Entertainment",
+        lastOpened: "Sun · 11:18 AM",
+      },
     ],
     categoryBreakdown: [
       { label: "Productivity", minutes: 428, color: "#38bdf8" },
@@ -158,500 +242,303 @@ const TIMEFRAME_DATA: Record<TimeframeKey, TimeframeData> = {
     ],
     highlights: [
       {
-        title: "Deep work streak",
-        detail: "2h 55m focused session on Thu",
+        title: "Focus recovered over the weekend",
+        detail: "Saturday and Sunday brought the strongest focus streak, lifting the weekly average by 6 points.",
         status: "positive",
       },
       {
-        title: "Tab discipline",
-        detail: "Average of 37 tabs per day",
-        status: "neutral",
+        title: "Friday created tab overload",
+        detail: "52 tabs opened pushed tab churn up 24% over the weekly baseline—consider batching triage earlier in the day.",
+        status: "warning",
       },
       {
-        title: "Weekend cooldown",
-        detail: "Usage down 52% on Sunday",
-        status: "warning",
+        title: "Notion usage climbed",
+        detail: "Documentation sessions added 28 extra minutes vs last week, balancing the meeting-heavy start.",
+        status: "neutral",
       },
     ],
   },
   month: {
-    label: "Last 4 weeks",
-    rangeLabel: "Nov 1 – Nov 28",
+    label: "Last 30 days",
+    rangeLabel: "Oct 26 – Nov 24",
     description:
-      "Zoom out to compare weekly totals and see how your focus trended across the month.",
+      "Zoom out to spot emerging trends across the past month and compare against your weekly baselines.",
+    metrics: [
+      { label: "Active time", value: "4,312 mins", change: "+8%", trend: "up" },
+      { label: "Average focus", value: "72", change: "–2 vs last month", trend: "down" },
+      { label: "Tabs opened", value: "1,021", change: "+5%", trend: "up" },
+      { label: "Unique sites", value: "247", change: "+3%", trend: "up" },
+    ],
     dailyUsage: [
-      { day: "Week 1", date: "Nov 1 – 7", minutes: 986, tabs: 248, focus: 72 },
-      { day: "Week 2", date: "Nov 8 – 14", minutes: 1042, tabs: 265, focus: 70 },
-      { day: "Week 3", date: "Nov 15 – 21", minutes: 1116, tabs: 281, focus: 68 },
-      { day: "Week 4", date: "Nov 22 – 28", minutes: 994, tabs: 243, focus: 74 },
+      {
+        day: "Week 1",
+        date: "Oct 26 – Nov 1",
+        minutes: 1084,
+        tabs: 238,
+        focus: 71,
+        topUrl: "mail.google.com",
+        context: "Quarterly planning and status reporting dominated the opening week.",
+      },
+      {
+        day: "Week 2",
+        date: "Nov 2 – Nov 8",
+        minutes: 992,
+        tabs: 247,
+        focus: 73,
+        topUrl: "github.com",
+        context: "Heads-down feature delivery lifted focus despite high tab churn.",
+      },
+      {
+        day: "Week 3",
+        date: "Nov 9 – Nov 15",
+        minutes: 1116,
+        tabs: 266,
+        focus: 70,
+        topUrl: "notion.so",
+        context: "Documentation and design reviews reduced active browsing minutes slightly.",
+      },
+      {
+        day: "Week 4",
+        date: "Nov 16 – Nov 24",
+        minutes: 1120,
+        tabs: 270,
+        focus: 74,
+        topUrl: "calendar.google.com",
+        context: "Meeting blocks increased but focus steadied with tighter scheduling.",
+      },
     ],
     urlVisits: [
       {
         domain: "mail.google.com",
         title: "Gmail",
-        visits: 78,
-        minutes: 482,
+        visits: 82,
+        minutes: 468,
         category: "Communication",
         lastOpened: "Today · 9:12 AM",
       },
       {
         domain: "calendar.google.com",
         title: "Google Calendar",
-        visits: 49,
-        minutes: 368,
+        visits: 63,
+        minutes: 388,
         category: "Productivity",
         lastOpened: "Today · 8:45 AM",
       },
       {
         domain: "github.com",
         title: "GitHub",
-        visits: 66,
-        minutes: 587,
+        visits: 71,
+        minutes: 612,
         category: "Development",
         lastOpened: "Yesterday · 6:32 PM",
       },
       {
         domain: "docs.google.com",
-        title: "Project doc",
-        visits: 41,
-        minutes: 312,
+        title: "Google Docs",
+        visits: 58,
+        minutes: 324,
         category: "Documentation",
-        lastOpened: "Yesterday · 4:18 PM",
-      },
-      {
-        domain: "news.ycombinator.com",
-        title: "Hacker News",
-        visits: 34,
-        minutes: 236,
-        category: "Research",
-        lastOpened: "Tue · 9:58 PM",
-      },
-      {
-        domain: "linear.app",
-        title: "Linear tasks",
-        visits: 37,
-        minutes: 274,
-        category: "Productivity",
-        lastOpened: "Tue · 3:21 PM",
-      },
-      {
-        domain: "youtube.com",
-        title: "Design reviews",
-        visits: 22,
-        minutes: 198,
-        category: "Learning",
-        lastOpened: "Mon · 10:07 PM",
+        lastOpened: "Yesterday · 7:58 PM",
       },
       {
         domain: "notion.so",
-        title: "Team wiki",
-        visits: 43,
-        minutes: 356,
+        title: "Notion workspace",
+        visits: 66,
+        minutes: 493,
         category: "Knowledge base",
-        lastOpened: "Sun · 11:48 AM",
+        lastOpened: "Thu · 3:04 PM",
+      },
+      {
+        domain: "figma.com",
+        title: "Figma",
+        visits: 39,
+        minutes: 242,
+        category: "Design",
+        lastOpened: "Wed · 4:27 PM",
+      },
+      {
+        domain: "open.spotify.com",
+        title: "Spotify",
+        visits: 48,
+        minutes: 198,
+        category: "Entertainment",
+        lastOpened: "Sun · 11:18 AM",
       },
     ],
     categoryBreakdown: [
-      { label: "Productivity", minutes: 1812, color: "#38bdf8" },
-      { label: "Development", minutes: 1584, color: "#6366f1" },
-      { label: "Research", minutes: 944, color: "#f472b6" },
-      { label: "Learning", minutes: 668, color: "#facc15" },
-      { label: "Documentation", minutes: 312, color: "#34d399" },
-      { label: "Other", minutes: 286, color: "#94a3b8" },
+      { label: "Productivity", minutes: 1688, color: "#38bdf8" },
+      { label: "Development", minutes: 1248, color: "#6366f1" },
+      { label: "Research", minutes: 612, color: "#f472b6" },
+      { label: "Entertainment", minutes: 384, color: "#facc15" },
+      { label: "Other", minutes: 380, color: "#94a3b8" },
     ],
     highlights: [
       {
-        title: "Focus rebound",
-        detail: "Week 4 focus climbed back to 74%",
+        title: "Monthly focus remained steady",
+        detail: "Despite heavier collaboration, focus stayed above 70 for three of four weeks.",
         status: "positive",
       },
       {
-        title: "GitHub heavy",
-        detail: "Nearly 10 hours spent reviewing pull requests",
-        status: "neutral",
+        title: "Development time is climbing",
+        detail: "GitHub minutes increased 12% over the prior month, showing more hands-on build time.",
+        status: "positive",
       },
       {
-        title: "Docs surge",
-        detail: "Documentation time up 26% versus last month",
-        status: "warning",
+        title: "Docs work slowed output",
+        detail: "Documentation sessions were necessary but trimmed active minutes during week three.",
+        status: "neutral",
       },
     ],
   },
 };
 
-type DoughnutTooltipContext = {
-  label?: string;
-  parsed: number;
-  dataset: {
-    data: number[];
-  };
+type State = {
+  timeframe: TimeframeKey;
+  selectedDayIndex: number;
+  searchTerm: string;
+  categoryFilter: string;
 };
 
-interface ChartCardProps {
-  title: string;
-  subtitle: string;
-  config: ChartConfig;
-  ready: boolean;
+type Action =
+  | { type: "setTimeframe"; payload: TimeframeKey }
+  | { type: "selectDay"; payload: number }
+  | { type: "setSearch"; payload: string }
+  | { type: "setCategory"; payload: string };
+
+const initialState: State = {
+  timeframe: "week",
+  selectedDayIndex: 0,
+  searchTerm: "",
+  categoryFilter: "all",
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "setTimeframe":
+      return {
+        timeframe: action.payload,
+        selectedDayIndex: 0,
+        searchTerm: "",
+        categoryFilter: "all",
+      };
+    case "selectDay":
+      return { ...state, selectedDayIndex: action.payload };
+    case "setSearch":
+      return { ...state, searchTerm: action.payload };
+    case "setCategory":
+      return { ...state, categoryFilter: action.payload };
+    default:
+      return state;
+  }
 }
 
-const formatDuration = (minutes: number) => {
-  const hours = Math.floor(minutes / 60);
-  const remaining = minutes % 60;
-
-  if (!hours) {
-    return `${remaining} min`;
-  }
-
-  return `${hours}h ${remaining.toString().padStart(2, "0")}m`;
-};
-
-const MetricCard = ({ label, value, change }: Metric) => (
-  <div className={styles.metricCard}>
-    <p className={styles.metricLabel}>{label}</p>
-    <p className={styles.metricValue}>{value}</p>
-    <p className={styles.metricChange}>{change}</p>
-  </div>
-);
-
-const ChartCard = ({ title, subtitle, config, ready }: ChartCardProps) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
+function useInteractiveChart(
+  chartClass: ChartConstructor | undefined,
+  canvasRef: React.RefObject<HTMLCanvasElement>,
+  config: ChartConfig | null
+) {
   useEffect(() => {
-    if (!ready || typeof window === "undefined" || !window.Chart) {
+    if (!chartClass || !canvasRef.current || !config) {
       return;
     }
 
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
-
-    const chartInstance = new window.Chart(canvas, config);
+    const chartInstance = new chartClass(canvasRef.current, config);
 
     return () => {
-      chartInstance?.destroy();
+      chartInstance.destroy();
     };
-  }, [config, ready]);
+  }, [chartClass, canvasRef, config]);
+}
 
-  return (
-    <div className={styles.chartCard}>
-      <div className={styles.chartHeader}>
-        <h3>{title}</h3>
-        <p>{subtitle}</p>
-      </div>
-      <div className={styles.chartCanvas}>
-        <canvas ref={canvasRef} aria-label={title} role="img" />
-        {!ready && <div className={styles.loading}>Loading Chart.js…</div>}
-      </div>
-    </div>
-  );
-};
-
-const Highlights = ({ items }: { items: Highlight[] }) => (
-  <div className={styles.highlights}>
-    <h3>Daily highlights</h3>
-    <ul>
-      {items.map((item) => (
-        <li key={item.title} data-status={item.status}>
-          <span className={styles.highlightTitle}>{item.title}</span>
-          <span className={styles.highlightDetail}>{item.detail}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+const formatMinutes = (minutes: number) => `${minutes} mins`;
+const formatTabs = (tabs: number) => `${tabs} tabs`;
 
 export default function Home() {
-  const [isChartReady, setIsChartReady] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [chartReady, setChartReady] = useState(false);
+  const [chartClass, setChartClass] = useState<ChartConstructor>();
 
-  const [timeframe, setTimeframe] = useState<TimeframeKey>("week");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const engagementCanvasRef = useRef<HTMLCanvasElement>(null);
+  const tabsCanvasRef = useRef<HTMLCanvasElement>(null);
+  const categoryCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const handlePeriodSelect = useCallback((index: number) => {
-    setSelectedDayIndex(index);
-  }, []);
+  const timeframeData = TIMEFRAME_DATA[state.timeframe];
+  const selectedDay = timeframeData.dailyUsage[state.selectedDayIndex];
 
-  const timeframeData = useMemo(() => TIMEFRAME_DATA[timeframe], [timeframe]);
-
-  const timeframeOptions = useMemo(
-    () => Object.entries(TIMEFRAME_DATA) as [TimeframeKey, TimeframeData][],
-    []
-  );
-
-  const dailyUsage = timeframeData.dailyUsage;
-  const urlVisits = timeframeData.urlVisits;
-  const categoryBreakdown = timeframeData.categoryBreakdown;
-  const highlights = timeframeData.highlights;
-  const timeframeRangeLabel = timeframeData.rangeLabel;
-  const timeframeDescription = timeframeData.description;
-
-  useEffect(() => {
-    setCategoryFilter("all");
-    setSearchTerm("");
-    setSelectedDayIndex(0);
-  }, [timeframe]);
-
-  const categories = useMemo(
-    () => ["all", ...new Set(urlVisits.map((visit) => visit.category))],
-    [urlVisits]
+  const categoryOptions = useMemo(
+    () => [
+      "all",
+      ...new Set(timeframeData.categoryBreakdown.map((slice) => slice.label)),
+    ],
+    [timeframeData.categoryBreakdown]
   );
 
   const filteredVisits = useMemo(() => {
-    return urlVisits.filter((visit) => {
+    return timeframeData.urlVisits.filter((visit) => {
+      const matchesSearch = `${visit.title} ${visit.domain}`
+        .toLowerCase()
+        .includes(state.searchTerm.toLowerCase());
       const matchesCategory =
-        categoryFilter === "all" || visit.category === categoryFilter;
-      const matchesQuery = searchTerm
-        ? `${visit.title} ${visit.domain}`.toLowerCase().includes(searchTerm.toLowerCase())
-        : true;
+        state.categoryFilter === "all" ||
+        visit.category === state.categoryFilter;
 
-      return matchesCategory && matchesQuery;
+      return matchesSearch && matchesCategory;
     });
-  }, [categoryFilter, searchTerm, urlVisits]);
+  }, [state.searchTerm, state.categoryFilter, timeframeData.urlVisits]);
 
-  const totalMinutes = useMemo(
-    () => dailyUsage.reduce((sum, day) => sum + day.minutes, 0),
-    [dailyUsage]
-  );
+  const highlightColor = "#38bdf8";
+  const neutralBorder = "rgba(148, 163, 184, 0.24)";
 
-  const totalTabs = useMemo(
-    () => dailyUsage.reduce((sum, day) => sum + day.tabs, 0),
-    [dailyUsage]
-  );
+  const engagementChartConfig = useMemo<ChartConfig | null>(() => {
+    if (!timeframeData) {
+      return null;
+    }
 
-  const totalPeriods = dailyUsage.length;
-
-  const averageFocus = useMemo(
-    () =>
-      Math.round(
-        dailyUsage.reduce((sum, day) => sum + day.focus, 0) / dailyUsage.length
+    const labels = timeframeData.dailyUsage.map((usage) => usage.day);
+    const minutesDataset: ChartDataset = {
+      label: "Active minutes",
+      data: timeframeData.dailyUsage.map((usage) => usage.minutes),
+      borderColor: highlightColor,
+      backgroundColor: "rgba(56, 189, 248, 0.16)",
+      pointBackgroundColor: labels.map((_, index) =>
+        index === state.selectedDayIndex ? highlightColor : "#1f2937"
       ),
-    [dailyUsage]
-  );
+      pointBorderColor: labels.map((_, index) =>
+        index === state.selectedDayIndex ? highlightColor : neutralBorder
+      ),
+      pointRadius: labels.map((_, index) => (index === state.selectedDayIndex ? 6 : 4)),
+      pointHoverRadius: labels.map((_, index) =>
+        index === state.selectedDayIndex ? 8 : 6
+      ),
+      tension: 0.35,
+      fill: true,
+    };
 
-  const averageTabsPerPeriod = useMemo(
-    () => (totalPeriods ? Math.round(totalTabs / totalPeriods) : 0),
-    [totalTabs, totalPeriods]
-  );
+    const focusDataset: ChartDataset = {
+      label: "Focus score",
+      data: timeframeData.dailyUsage.map((usage) => usage.focus),
+      borderColor: "#facc15",
+      backgroundColor: "rgba(250, 204, 21, 0.18)",
+      pointBackgroundColor: labels.map((_, index) =>
+        index === state.selectedDayIndex ? "#facc15" : "#0f172a"
+      ),
+      pointBorderColor: labels.map((_, index) =>
+        index === state.selectedDayIndex ? "#facc15" : neutralBorder
+      ),
+      pointRadius: labels.map((_, index) => (index === state.selectedDayIndex ? 6 : 4)),
+      pointHoverRadius: labels.map((_, index) =>
+        index === state.selectedDayIndex ? 8 : 6
+      ),
+      tension: 0.35,
+      borderDash: [4, 4],
+      yAxisID: "y1",
+    };
 
-  const averageMinutesPerPeriod = useMemo(
-    () => (totalPeriods ? Math.round(totalMinutes / totalPeriods) : 0),
-    [totalMinutes, totalPeriods]
-  );
-
-  const busiestDay = useMemo(() => {
-    return dailyUsage.reduce((max, day) => (day.tabs > max.tabs ? day : max), dailyUsage[0]);
-  }, [dailyUsage]);
-
-  const selectedDay = dailyUsage[selectedDayIndex];
-
-  const selectedDayShare = useMemo(() => {
-    if (!selectedDay || totalMinutes === 0) {
-      return 0;
-    }
-
-    return Math.round((selectedDay.minutes / totalMinutes) * 100);
-  }, [selectedDay, totalMinutes]);
-
-  const focusDelta = useMemo(() => {
-    if (!selectedDay) {
-      return 0;
-    }
-
-    return selectedDay.focus - averageFocus;
-  }, [averageFocus, selectedDay]);
-
-  const tabDelta = useMemo(() => {
-    if (!selectedDay) {
-      return 0;
-    }
-
-    return selectedDay.tabs - averageTabsPerPeriod;
-  }, [averageTabsPerPeriod, selectedDay]);
-
-  const dayRank = useMemo(() => {
-    const ranking = dailyUsage
-      .map((day, index) => ({ index, minutes: day.minutes }))
-      .sort((a, b) => b.minutes - a.minutes);
-
-    const foundIndex = ranking.findIndex((item) => item.index === selectedDayIndex);
-
-    return foundIndex === -1 ? 0 : foundIndex + 1;
-  }, [dailyUsage, selectedDayIndex]);
-
-  const summaryMetrics = useMemo<Metric[]>(
-    () => [
-      {
-        label: "Active browsing time",
-        value: formatDuration(totalMinutes),
-        change: "+12% vs last week",
-      },
-      {
-        label: "Tabs opened",
-        value: totalTabs.toString(),
-        change: `Peak ${busiestDay.tabs} tabs on ${busiestDay.day}`,
-      },
-      {
-        label: "Average focus score",
-        value: `${averageFocus}%`,
-        change: "Goal ≥ 75%",
-      },
-      {
-        label: "Most visited domain",
-        value: urlVisits[0].domain,
-        change: `${urlVisits[0].visits} visits this week`,
-      },
-    ],
-    [averageFocus, busiestDay, totalMinutes, totalTabs, urlVisits]
-  );
-
-  const selectedDayMetrics = useMemo(() => {
-    if (!selectedDay) {
-      return [] as Metric[];
-    }
-
-    const timeframeLabel = timeframe === "week" ? "week" : "period";
-    const focusDeltaLabel =
-      focusDelta === 0
-        ? "Matched your average focus"
-        : `${focusDelta > 0 ? "+" : ""}${focusDelta}% vs range avg`;
-
-    const tabDeltaLabel =
-      tabDelta === 0
-        ? "Tabs aligned with your average"
-        : `${tabDelta > 0 ? "+" : ""}${tabDelta} vs avg ${averageTabsPerPeriod}`;
-
-    const busierThanMost = dayRank !== 0 && dayRank <= Math.ceil(totalPeriods / 2);
-
-    const intensityDetail =
-      dayRank === 0
-        ? ""
-        : busierThanMost
-        ? "Busier than most days in this range"
-        : "Calmer than the majority of days";
-
-    return [
-      {
-        label: "Active minutes",
-        value: formatDuration(selectedDay.minutes),
-        change: `${selectedDayShare}% of this ${timeframeLabel}`,
-      },
-      {
-        label: "Tabs opened",
-        value: selectedDay.tabs.toString(),
-        change: tabDeltaLabel,
-      },
-      {
-        label: "Focus score",
-        value: `${selectedDay.focus}%`,
-        change: focusDeltaLabel,
-      },
-      {
-        label: "Intensity rank",
-        value: `#${dayRank || "-"} of ${totalPeriods}`,
-        change: intensityDetail,
-      },
-    ];
-  }, [
-    averageTabsPerPeriod,
-    dayRank,
-    focusDelta,
-    selectedDay,
-    selectedDayShare,
-    tabDelta,
-    timeframe,
-    totalPeriods,
-  ]);
-
-  const selectedDayInsights = useMemo(() => {
-    if (!selectedDay) {
-      return [] as string[];
-    }
-
-    const insights: string[] = [];
-
-    if (focusDelta >= 5) {
-      insights.push("Focus surged above baseline—double down on what worked here.");
-    } else if (focusDelta <= -5) {
-      insights.push("Focus dipped below your usual level—consider a shorter session next time.");
-    } else {
-      insights.push("Focus held steady with your range average—consistency unlocked.");
-    }
-
-    if (selectedDay.tabs === busiestDay.tabs) {
-      insights.push("Highest tab load of the range—perfect moment for tab groups or bookmarks.");
-    } else if (tabDelta > 0) {
-      insights.push("Tabs crept above average—batch similar work to stay organized.");
-    } else {
-      insights.push("Lean tab load kept context switching low—nice discipline.");
-    }
-
-    if (selectedDayShare >= 25) {
-      insights.push(`A quarter of total active time happened this ${timeframe === "week" ? "day" : "week"}.`);
-    } else if (selectedDay.minutes < averageMinutesPerPeriod) {
-      insights.push("Time on browser stayed below your typical cadence.");
-    } else {
-      insights.push("Time commitment matched your normal rhythm for this range.");
-    }
-
-    return insights;
-  }, [
-    averageMinutesPerPeriod,
-    busiestDay.tabs,
-    focusDelta,
-    selectedDay,
-    selectedDayShare,
-    tabDelta,
-    timeframe,
-  ]);
-
-  const usageTrendConfig = useMemo<ChartConfig>(
-    () => ({
+    return {
       type: "line",
       data: {
-        labels: dailyUsage.map((day) => `${day.day} · ${day.date}`),
-        datasets: [
-          {
-            label: "Active minutes",
-            data: dailyUsage.map((day) => day.minutes),
-            borderColor: "#38bdf8",
-            backgroundColor: "rgba(56, 189, 248, 0.18)",
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4,
-            pointRadius: (context: { dataIndex: number }) =>
-              context.dataIndex === selectedDayIndex ? 6 : 4,
-            pointHoverRadius: (context: { dataIndex: number }) =>
-              context.dataIndex === selectedDayIndex ? 7 : 5,
-            pointBackgroundColor: dailyUsage.map((_, index) =>
-              index === selectedDayIndex
-                ? "rgba(56, 189, 248, 1)"
-                : "rgba(56, 189, 248, 0.75)"
-            ),
-            pointBorderColor: "rgba(15, 23, 42, 1)",
-          },
-          {
-            label: "Focus score",
-            data: dailyUsage.map((day) => day.focus),
-            borderColor: "#f472b6",
-            backgroundColor: "rgba(244, 114, 182, 0.16)",
-            borderDash: [8, 6],
-            borderWidth: 2,
-            tension: 0.3,
-            yAxisID: "y1",
-            pointRadius: (context: { dataIndex: number }) =>
-              context.dataIndex === selectedDayIndex ? 6 : 4,
-            pointHoverRadius: (context: { dataIndex: number }) =>
-              context.dataIndex === selectedDayIndex ? 7 : 5,
-            pointBackgroundColor: dailyUsage.map((_, index) =>
-              index === selectedDayIndex
-                ? "rgba(244, 114, 182, 1)"
-                : "rgba(244, 114, 182, 0.75)"
-            ),
-            pointBorderColor: "rgba(15, 23, 42, 1)",
-          },
-        ],
+        labels,
+        datasets: [minutesDataset, focusDataset],
       },
       options: {
         responsive: true,
@@ -660,487 +547,517 @@ export default function Home() {
           mode: "index",
           intersect: false,
         },
-        onHover: (event: { native?: { target?: EventTarget | null } }, elements: unknown[]) => {
-          const canvas = event.native?.target as HTMLCanvasElement | undefined;
-          if (canvas) {
-            canvas.style.cursor = elements.length ? "pointer" : "default";
-          }
-        },
-        onClick: (_event: unknown, elements: Array<{ index: number }>) => {
-          if (!elements || elements.length === 0) {
-            return;
-          }
-
-          const [element] = elements;
-          if (typeof element?.index !== "number") {
-            return;
-          }
-
-          if (!dailyUsage[element.index]) {
-            return;
-          }
-
-          handlePeriodSelect(element.index);
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: "#cbd5f5",
-              font: {
-                family: "var(--font-geist-sans)",
-              },
-            },
-          },
-          tooltip: {
-            backgroundColor: "rgba(15, 23, 42, 0.92)",
-            titleColor: "#f8fafc",
-            bodyColor: "#e2e8f0",
-            borderColor: "rgba(148, 163, 184, 0.35)",
-            borderWidth: 1,
-            padding: 12,
-            displayColors: true,
-          },
-        },
         scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Minutes",
-              color: "#cbd5f5",
-            },
+          x: {
             ticks: {
-              color: "#94a3b8",
+              color: "#cbd5f5",
+              font: { size: 12 },
             },
             grid: {
-              color: "rgba(148, 163, 184, 0.15)",
+              color: "rgba(148, 163, 184, 0.1)",
+            },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: "#cbd5f5",
+              stepSize: 50,
+            },
+            grid: {
+              color: "rgba(148, 163, 184, 0.08)",
             },
           },
           y1: {
             beginAtZero: true,
-            max: 100,
             position: "right",
-            title: {
-              display: true,
-              text: "Focus %",
-              color: "#cbd5f5",
-            },
             ticks: {
-              color: "#94a3b8",
-              callback: (value: number) => `${value}%`,
+              color: "#cbd5f5",
+              stepSize: 5,
             },
             grid: {
               drawOnChartArea: false,
             },
           },
-          x: {
-            ticks: {
-              color: "#94a3b8",
-              maxRotation: 0,
-            },
-            grid: {
-              display: false,
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: "#e2e8f0",
+              usePointStyle: true,
             },
           },
-        },
-      },
-    }),
-    [dailyUsage, handlePeriodSelect, selectedDayIndex]
-  );
+          tooltip: {
+            callbacks: {
+              label: (context: Record<string, unknown>) => {
+                if (context.datasetIndex === 0) {
+                  return `Active minutes: ${context.parsed?.y ?? 0}`;
+                }
 
-  const tabsConfig = useMemo<ChartConfig>(
-    () => ({
-      type: "bar",
-      data: {
-        labels: dailyUsage.map((day) => `${day.day} · ${day.date}`),
-        datasets: [
-          {
-            label: "Tabs opened",
-            data: dailyUsage.map((day) => day.tabs),
-            backgroundColor: dailyUsage.map((_, index) =>
-              index === selectedDayIndex
-                ? "rgba(99, 102, 241, 1)"
-                : "rgba(99, 102, 241, 0.6)"
-            ),
-            borderRadius: 10,
-            hoverBackgroundColor: dailyUsage.map((_, index) =>
-              index === selectedDayIndex
-                ? "rgba(99, 102, 241, 1)"
-                : "rgba(99, 102, 241, 0.85)"
-            ),
+                return `Focus score: ${context.parsed?.y ?? 0}`;
+              },
+            },
+            backgroundColor: "rgba(15, 23, 42, 0.96)",
+            borderColor: "rgba(148, 163, 184, 0.35)",
+            borderWidth: 1,
+            titleColor: "#f8fafc",
+            bodyColor: "#e2e8f0",
           },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        onHover: (event: { native?: { target?: EventTarget | null } }, elements: unknown[]) => {
-          const canvas = event.native?.target as HTMLCanvasElement | undefined;
-          if (canvas) {
-            canvas.style.cursor = elements.length ? "pointer" : "default";
-          }
         },
-        onClick: (_event: unknown, elements: Array<{ index: number }>) => {
+        onClick: (_: unknown, elements: Array<{ index: number }>) => {
           if (!elements || elements.length === 0) {
             return;
           }
 
-          const [element] = elements;
-          if (typeof element?.index !== "number") {
-            return;
-          }
-
-          if (!dailyUsage[element.index]) {
-            return;
-          }
-
-          handlePeriodSelect(element.index);
-        },
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            backgroundColor: "rgba(15, 23, 42, 0.92)",
-            titleColor: "#f8fafc",
-            bodyColor: "#e2e8f0",
-            borderColor: "rgba(99, 102, 241, 0.6)",
-            borderWidth: 1,
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: "#94a3b8",
-            },
-            grid: {
-              color: "rgba(148, 163, 184, 0.15)",
-            },
-          },
-          x: {
-            ticks: {
-              color: "#94a3b8",
-              maxRotation: 0,
-            },
-            grid: {
-              display: false,
-            },
-          },
+          const index = elements[0]?.index ?? 0;
+          dispatch({ type: "selectDay", payload: index });
         },
       },
-    }),
-    [dailyUsage, handlePeriodSelect, selectedDayIndex]
-  );
+    };
+  }, [
+    timeframeData,
+    state.selectedDayIndex,
+    dispatch,
+    highlightColor,
+    neutralBorder,
+  ]);
 
-  const categoryConfig = useMemo<ChartConfig>(
-    () => ({
-      type: "doughnut",
+  const tabsChartConfig = useMemo<ChartConfig | null>(() => {
+    if (!timeframeData) {
+      return null;
+    }
+
+    const labels = timeframeData.dailyUsage.map((usage) => usage.day);
+    const data = timeframeData.dailyUsage.map((usage) => usage.tabs);
+
+    const background = labels.map((_, index) =>
+      index === state.selectedDayIndex
+        ? "rgba(99, 102, 241, 0.95)"
+        : "rgba(99, 102, 241, 0.45)"
+    );
+
+    return {
+      type: "bar",
       data: {
-        labels: categoryBreakdown.map((item) => item.label),
+        labels,
         datasets: [
           {
-            data: categoryBreakdown.map((item) => item.minutes),
-            backgroundColor: categoryBreakdown.map((item) => item.color),
-            borderColor: "rgba(15, 23, 42, 1)",
-            borderWidth: 2,
+            label: "Tabs opened",
+            data,
+            backgroundColor: background,
+            borderRadius: 12,
+            borderSkipped: false,
           },
         ],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: "60%",
+        scales: {
+          x: {
+            ticks: {
+              color: "#cbd5f5",
+            },
+            grid: {
+              display: false,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: "#cbd5f5",
+              stepSize: 10,
+            },
+            grid: {
+              color: "rgba(148, 163, 184, 0.08)",
+            },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context: Record<string, unknown>) =>
+                `Tabs opened: ${context.parsed?.y ?? 0}`,
+            },
+            backgroundColor: "rgba(15, 23, 42, 0.96)",
+            borderColor: "rgba(148, 163, 184, 0.35)",
+            borderWidth: 1,
+            titleColor: "#f8fafc",
+            bodyColor: "#e2e8f0",
+          },
+        },
+        onClick: (_: unknown, elements: Array<{ index: number }>) => {
+          if (!elements || elements.length === 0) {
+            return;
+          }
+
+          const index = elements[0]?.index ?? 0;
+          dispatch({ type: "selectDay", payload: index });
+        },
+      },
+    };
+  }, [timeframeData, state.selectedDayIndex, dispatch]);
+
+  const categoryChartConfig = useMemo<ChartConfig | null>(() => {
+    if (!timeframeData) {
+      return null;
+    }
+
+    const labels = timeframeData.categoryBreakdown.map((slice) => slice.label);
+    const data = timeframeData.categoryBreakdown.map((slice) => slice.minutes);
+    const colors = timeframeData.categoryBreakdown.map((slice) => slice.color);
+
+    return {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Minutes",
+            data,
+            backgroundColor: colors,
+            hoverOffset: 12,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "62%",
         plugins: {
           legend: {
             position: "bottom",
             labels: {
-              color: "#cbd5f5",
-              boxWidth: 12,
-            },
-          },
-          tooltip: {
-            backgroundColor: "rgba(15, 23, 42, 0.92)",
-            titleColor: "#f8fafc",
-            bodyColor: "#e2e8f0",
-            borderColor: "rgba(56, 189, 248, 0.35)",
-            borderWidth: 1,
-            callbacks: {
-              label: (context: DoughnutTooltipContext) => {
-                const label = context.label ?? "";
-                const value = context.parsed;
-                const total = context.dataset.data.reduce(
-                  (sum: number, current: number) => sum + current,
-                  0
-                );
-                const percent = Math.round((value / total) * 100);
-                return `${label}: ${formatDuration(value)} (${percent}%)`;
-              },
+              color: "#e2e8f0",
+              padding: 18,
             },
           },
         },
+        onClick: (_: unknown, elements: Array<{ index: number }>) => {
+          if (!elements || elements.length === 0) {
+            return;
+          }
+
+          const index = elements[0]?.index ?? 0;
+          const selectedCategory = labels[index];
+
+          dispatch({
+            type: "setCategory",
+            payload:
+              state.categoryFilter === selectedCategory ? "all" : selectedCategory,
+          });
+        },
       },
-    }),
-    [categoryBreakdown]
+    };
+  }, [timeframeData, state.categoryFilter, dispatch]);
+
+  const handleTimeframeChange = useCallback(
+    (key: TimeframeKey) => {
+      dispatch({ type: "setTimeframe", payload: key });
+    },
+    [dispatch]
   );
 
-  const usageSubtitle =
-    timeframe === "week"
-      ? "Daily breakdown of minutes spent in Chrome"
-      : "Weekly totals across the last four weeks";
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      dispatch({ type: "setSearch", payload: event.target.value });
+    },
+    []
+  );
 
-  const tabsSubtitle =
-    timeframe === "week"
-      ? "Counts include new and restored tabs"
-      : "Total tabs opened for each recorded week";
+  const handleCategoryChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      dispatch({ type: "setCategory", payload: event.target.value });
+    },
+    []
+  );
 
-  const timeframeTag =
-    timeframe === "week" ? "Weekly Chrome insights" : "Monthly Chrome insights";
+  const selectDay = useCallback(
+    (index: number) => () => {
+      dispatch({ type: "selectDay", payload: index });
+    },
+    []
+  );
 
-  const timeframeUnitLabel = timeframe === "week" ? "day" : "week";
+  useEffect(() => {
+    if (!chartReady) {
+      return;
+    }
 
-  const hasPreviousDay = selectedDayIndex > 0;
-  const hasNextDay = selectedDayIndex < dailyUsage.length - 1;
+    if (typeof window !== "undefined" && window.Chart) {
+      setChartClass(window.Chart);
+    }
+  }, [chartReady]);
 
-  const goToPreviousDay = () => {
-    setSelectedDayIndex((current) => Math.max(0, current - 1));
-  };
+  useInteractiveChart(chartClass, engagementCanvasRef, engagementChartConfig);
+  useInteractiveChart(chartClass, tabsCanvasRef, tabsChartConfig);
+  useInteractiveChart(chartClass, categoryCanvasRef, categoryChartConfig);
 
-  const goToNextDay = () => {
-    setSelectedDayIndex((current) =>
-      Math.min(dailyUsage.length ? dailyUsage.length - 1 : 0, current + 1)
-    );
-  };
+  const chartsUnavailable = !chartClass;
 
   return (
     <>
       <Head>
-        <title>Chrome usage monitor</title>
-        <meta name="description" content="Track Chrome activity, tabs opened, and visited URLs." />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Chrome usage center</title>
+        <meta
+          name="description"
+          content="Interactive Chrome usage monitor built with Next.js and Chart.js"
+        />
       </Head>
       <Script
         src="https://cdn.jsdelivr.net/npm/chart.js"
         strategy="afterInteractive"
-        onLoad={() => setIsChartReady(true)}
+        onLoad={() => setChartReady(true)}
       />
-      <div className={`${styles.page} ${geistSans.variable} ${geistMono.variable}`}>
-        <main className={styles.main}>
+      <main className={`${styles.page} ${geistSans.variable} ${geistMono.variable}`}>
+        <div className={styles.viewport}>
           <header className={styles.header}>
-            <div className={styles.headerTop}>
-              <div>
-                <span className={styles.tag}>{timeframeTag}</span>
-                <h1>Usage control center</h1>
-              </div>
-              <div className={styles.timeframeToggle} role="group" aria-label="Select time range">
-                {timeframeOptions.map(([key, option]) => (
+            <div className={styles.headerContent}>
+              <p className={styles.eyebrow}>Usage center</p>
+              <h1 className={styles.title}>Chrome activity intelligence</h1>
+              <p className={styles.subtitle}>{timeframeData.description}</p>
+            </div>
+            <div className={styles.timeframeBar}>
+              {(Object.keys(TIMEFRAME_DATA) as TimeframeKey[]).map((key) => {
+                const data = TIMEFRAME_DATA[key];
+                const isActive = state.timeframe === key;
+
+                return (
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setTimeframe(key)}
-                    data-active={timeframe === key}
+                    className={`${styles.timeframeButton} ${
+                      isActive ? styles.timeframeButtonActive : ""
+                    }`}
+                    onClick={() => handleTimeframeChange(key)}
                   >
-                    {option.label}
+                    <span className={styles.timeframeLabel}>{data.label}</span>
+                    <span className={styles.timeframeRange}>{data.rangeLabel}</span>
                   </button>
-                ))}
-              </div>
-            </div>
-            <p>
-              Explore the interactive charts, filters, and highlights to understand how browsing
-              habits shift over time and which sites drive your focus.
-            </p>
-            <div className={styles.metaRow}>
-              <div className={styles.timeframe}>{timeframeRangeLabel} · Local timezone</div>
-              <div className={styles.timeframeDescription}>{timeframeDescription}</div>
+                );
+              })}
             </div>
           </header>
 
-          <section className={styles.summaryGrid}>
-            {summaryMetrics.map((metric) => (
-              <MetricCard key={metric.label} {...metric} />
+          <section className={styles.metricsGrid}>
+            {timeframeData.metrics.map((metric) => (
+              <article key={metric.label} className={styles.metricCard}>
+                <span className={styles.metricLabel}>{metric.label}</span>
+                <strong className={styles.metricValue}>{metric.value}</strong>
+                <span
+                  className={`${styles.metricChange} ${
+                    metric.trend === "up"
+                      ? styles.metricPositive
+                      : metric.trend === "down"
+                      ? styles.metricNegative
+                      : styles.metricNeutral
+                  }`}
+                >
+                  {metric.change}
+                </span>
+              </article>
             ))}
           </section>
 
-          <section className={styles.drilldownSection} aria-label="Interactive daily drilldown">
-            <div className={styles.drilldownHeader}>
-              <div>
-                <h3>Daily drilldown</h3>
-                <p>
-                  Tap through each {timeframeUnitLabel} to compare focus, time, and tab load for the
-                  current view.
-                </p>
-              </div>
-              <div
-                className={styles.drilldownNav}
-                role="group"
-                aria-label={`Browse ${timeframeUnitLabel} summaries`}
-              >
-                <button
-                  type="button"
-                  onClick={goToPreviousDay}
-                  disabled={!hasPreviousDay}
-                  aria-label={`View previous ${timeframeUnitLabel}`}
-                >
-                  <span aria-hidden>←</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={goToNextDay}
-                  disabled={!hasNextDay}
-                  aria-label={`View next ${timeframeUnitLabel}`}
-                >
-                  <span aria-hidden>→</span>
-                </button>
-              </div>
-            </div>
-            <div className={styles.drilldownBody}>
-              <ul className={styles.drilldownList}>
-                {dailyUsage.map((day, index) => {
-                  const isActive = index === selectedDayIndex;
-
-                  return (
-                    <li key={`${day.day}-${day.date}`}>
-                      <button
-                        type="button"
-                        onClick={() => handlePeriodSelect(index)}
-                        data-active={isActive}
-                        aria-pressed={isActive}
-                      >
-                        <span className={styles.drilldownDay}>{day.day}</span>
-                        <span className={styles.drilldownDate}>{day.date}</span>
-                        <span className={styles.drilldownMinutes}>{formatDuration(day.minutes)}</span>
-                        <span className={styles.drilldownFocus}>Focus {day.focus}%</span>
-                        <span className={styles.drilldownTabs}>{day.tabs} tabs</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {selectedDay && (
-                <div className={styles.drilldownDetails}>
-                  <header className={styles.drilldownDetailsHeader}>
-                    <div>
-                      <span className={styles.drilldownDetailsLabel}>Selected {timeframeUnitLabel}</span>
-                      <h4>
-                        {selectedDay.day}
-                        <span> · {selectedDay.date}</span>
-                      </h4>
-                    </div>
-                    <span className={styles.drilldownBadge}>{formatDuration(selectedDay.minutes)}</span>
-                  </header>
-                  <div className={styles.drilldownMetrics}>
-                    {selectedDayMetrics.map((metric) => (
-                      <div key={metric.label} className={styles.drilldownMetric}>
-                        <p className={styles.drilldownMetricLabel}>{metric.label}</p>
-                        <p className={styles.drilldownMetricValue}>{metric.value}</p>
-                        <p className={styles.drilldownMetricDetail}>{metric.change}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className={styles.drilldownInsights}>
-                    <h5>Insights</h5>
-                    <ul>
-                      {selectedDayInsights.map((insight) => (
-                        <li key={insight}>{insight}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className={styles.visualGrid}>
-            <ChartCard
-              title="Active time vs. focus"
-              subtitle={usageSubtitle}
-              config={usageTrendConfig}
-              ready={isChartReady}
-            />
-            <ChartCard
-              title={timeframe === "week" ? "Tabs opened each day" : "Tabs opened each week"}
-              subtitle={tabsSubtitle}
-              config={tabsConfig}
-              ready={isChartReady}
-            />
-            <ChartCard
-              title="Attention by category"
-              subtitle="Share of total active minutes"
-              config={categoryConfig}
-              ready={isChartReady}
-            />
-          </section>
-
-          <section className={styles.detailsGrid}>
-            <div className={styles.tableCard}>
-              <div className={styles.tableHeader}>
+          <section className={styles.analyticsGrid}>
+            <article className={styles.chartCard}>
+              <header className={styles.chartHeader}>
                 <div>
-                  <h3>Most visited URLs</h3>
-                  <p>Sorted by time on page</p>
+                  <h2>Focus &amp; active time</h2>
+                  <p>Compare minutes in Chrome with your focus score for the selected range.</p>
                 </div>
-                <div className={styles.tableControls}>
-                  <label className={styles.field}>
-                    <span>Search</span>
-                    <input
-                      type="search"
-                      placeholder="Filter titles or domains"
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                    />
-                  </label>
-                  <label className={styles.field}>
-                    <span>Category</span>
-                    <select
-                      value={categoryFilter}
-                      onChange={(event) => setCategoryFilter(event.target.value)}
-                    >
-                      {categories.map((category) => (
-                        <option value={category} key={category}>
-                          {category === "all" ? "All" : category}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
+                <span className={styles.selectedBadge}>
+                  {selectedDay.day} · {selectedDay.date}
+                </span>
+              </header>
+              <div className={styles.chartBody}>
+                {chartsUnavailable ? (
+                  <div className={styles.chartFallback}>
+                    Loading Chart.js…
+                  </div>
+                ) : (
+                  <canvas ref={engagementCanvasRef} aria-label="Focus and active minutes chart" />
+                )}
               </div>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th scope="col">URL</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Visits</th>
-                    <th scope="col">Time spent</th>
-                    <th scope="col">Last opened</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVisits.length > 0 ? (
-                    filteredVisits.map((visit) => (
-                      <tr key={`${visit.domain}-${visit.title}`}>
-                        <td>
-                          <span className={styles.urlTitle}>{visit.title}</span>
-                          <span className={styles.urlDomain}>{visit.domain}</span>
-                        </td>
-                        <td>{visit.category}</td>
-                        <td>{visit.visits}</td>
-                        <td>{formatDuration(visit.minutes)}</td>
-                        <td>{visit.lastOpened}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className={styles.emptyRow} colSpan={5}>
-                        No URLs match your filters yet.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <Highlights items={highlights} />
+            </article>
+
+            <article className={styles.chartCard}>
+              <header className={styles.chartHeader}>
+                <div>
+                  <h2>Tab discipline</h2>
+                  <p>See how tab churn fluctuated to spot overload days instantly.</p>
+                </div>
+                <span className={styles.selectedBadge}>
+                  {formatTabs(selectedDay.tabs)}
+                </span>
+              </header>
+              <div className={styles.chartBody}>
+                {chartsUnavailable ? (
+                  <div className={styles.chartFallback}>Loading Chart.js…</div>
+                ) : (
+                  <canvas ref={tabsCanvasRef} aria-label="Tabs opened chart" />
+                )}
+              </div>
+            </article>
+
+            <article className={styles.chartCard}>
+              <header className={styles.chartHeader}>
+                <div>
+                  <h2>Attention mix</h2>
+                  <p>Highlight where your Chrome time concentrates by category.</p>
+                </div>
+                <span className={styles.selectedBadge}>
+                  {state.categoryFilter === "all"
+                    ? "All categories"
+                    : state.categoryFilter}
+                </span>
+              </header>
+              <div className={styles.chartBody}>
+                {chartsUnavailable ? (
+                  <div className={styles.chartFallback}>Loading Chart.js…</div>
+                ) : (
+                  <canvas ref={categoryCanvasRef} aria-label="Category distribution chart" />
+                )}
+              </div>
+            </article>
+
+            <aside className={styles.detailCard}>
+              <header className={styles.detailHeader}>
+                <h2>{selectedDay.day}</h2>
+                <div className={styles.detailMeta}>
+                  <span>{selectedDay.date}</span>
+                  <span>{selectedDay.topUrl}</span>
+                </div>
+              </header>
+              <p className={styles.detailContext}>{selectedDay.context}</p>
+              <dl className={styles.detailStats}>
+                <div>
+                  <dt>Active minutes</dt>
+                  <dd>{formatMinutes(selectedDay.minutes)}</dd>
+                </div>
+                <div>
+                  <dt>Focus score</dt>
+                  <dd>{selectedDay.focus}</dd>
+                </div>
+                <div>
+                  <dt>Tabs opened</dt>
+                  <dd>{selectedDay.tabs}</dd>
+                </div>
+              </dl>
+              <ul className={styles.dayPicker}>
+                {timeframeData.dailyUsage.map((usage, index) => (
+                  <li key={`${usage.day}-${usage.date}`}>
+                    <button
+                      type="button"
+                      onClick={selectDay(index)}
+                      className={`${styles.dayButton} ${
+                        index === state.selectedDayIndex ? styles.dayButtonActive : ""
+                      }`}
+                    >
+                      <span className={styles.dayLabel}>{usage.day}</span>
+                      <span className={styles.dayValue}>{usage.minutes}m</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </aside>
           </section>
-        </main>
-      </div>
+
+          <section className={styles.lowerGrid}>
+            <article className={styles.tableCard}>
+              <header className={styles.tableHeader}>
+                <div>
+                  <h2>Visited URLs</h2>
+                  <p>Filter down to the pages driving your Chrome usage.</p>
+                </div>
+                <div className={styles.tableFilters}>
+                  <input
+                    type="search"
+                    placeholder="Search by URL or title"
+                    value={state.searchTerm}
+                    onChange={handleSearchChange}
+                    className={styles.searchInput}
+                    aria-label="Search visited URLs"
+                  />
+                  <select
+                    value={state.categoryFilter}
+                    onChange={handleCategoryChange}
+                    className={styles.categorySelect}
+                    aria-label="Filter by category"
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option === "all" ? "All categories" : option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </header>
+              <div className={styles.tableScroll}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th scope="col">URL</th>
+                      <th scope="col">Category</th>
+                      <th scope="col">Minutes</th>
+                      <th scope="col">Visits</th>
+                      <th scope="col">Last opened</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredVisits.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className={styles.emptyState}>
+                          No visits match your filters—try adjusting the search or category.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredVisits.map((visit) => (
+                        <tr key={`${visit.domain}-${visit.title}`}>
+                          <th scope="row">
+                            <div className={styles.urlCell}>
+                              <span className={styles.urlDomain}>{visit.domain}</span>
+                              <span className={styles.urlTitle}>{visit.title}</span>
+                            </div>
+                          </th>
+                          <td>{visit.category}</td>
+                          <td>{formatMinutes(visit.minutes)}</td>
+                          <td>{visit.visits}</td>
+                          <td>{visit.lastOpened}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <aside className={styles.highlightCard}>
+              <header>
+                <h2>Insights</h2>
+                <p>Combine quantitative trends with qualitative takeaways.</p>
+              </header>
+              <ul className={styles.highlightList}>
+                {timeframeData.highlights.map((highlight) => (
+                  <li
+                    key={highlight.title}
+                    className={`${styles.highlightItem} ${
+                      highlight.status === "positive"
+                        ? styles.highlightPositive
+                        : highlight.status === "warning"
+                        ? styles.highlightWarning
+                        : styles.highlightNeutral
+                    }`}
+                  >
+                    <h3>{highlight.title}</h3>
+                    <p>{highlight.detail}</p>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          </section>
+        </div>
+      </main>
     </>
   );
 }
