@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Chromore Analytics</title>
+  <style>
+    body{font-family:system-ui,Arial; padding:12px; width:360px;}
+    h1{font-size:16px;margin:0 0 8px}
+    .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:6px;text-align:left;border-bottom:1px solid #eee}
+    #chart{height:160px;width:100%}
+    .small{font-size:12px;color:#666}
+  </style>
+</head>
+<body>
+  <h1>Chromore Analytics</h1>
+  <div class="row">
+    <div>Open tabs</div>
+    <div id="tabCount">—</div>
+  </div>
+  <div class="row">
+    <div>Total tracked time</div>
+    <div id="totalTime">—</div>
+  </div>
+  <canvas id="chart"></canvas>
+  <h3 style="margin-top:8px;">Top sites</h3>
+  <table id="topTable"><thead><tr><th>Domain</th><th>Time</th></tr></thead><tbody></tbody></table>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
