@@ -367,6 +367,7 @@ export default function Home() {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("week");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
   const timeframeData = useMemo(() => TIMEFRAME_DATA[timeframe], [timeframe]);
 
@@ -385,6 +386,7 @@ export default function Home() {
   useEffect(() => {
     setCategoryFilter("all");
     setSearchTerm("");
+    setSelectedDayIndex(0);
   }, [timeframe]);
 
   const categories = useMemo(
@@ -414,6 +416,8 @@ export default function Home() {
     [dailyUsage]
   );
 
+  const totalPeriods = dailyUsage.length;
+
   const averageFocus = useMemo(
     () =>
       Math.round(
@@ -422,9 +426,55 @@ export default function Home() {
     [dailyUsage]
   );
 
+  const averageTabsPerPeriod = useMemo(
+    () => (totalPeriods ? Math.round(totalTabs / totalPeriods) : 0),
+    [totalTabs, totalPeriods]
+  );
+
+  const averageMinutesPerPeriod = useMemo(
+    () => (totalPeriods ? Math.round(totalMinutes / totalPeriods) : 0),
+    [totalMinutes, totalPeriods]
+  );
+
   const busiestDay = useMemo(() => {
     return dailyUsage.reduce((max, day) => (day.tabs > max.tabs ? day : max), dailyUsage[0]);
   }, [dailyUsage]);
+
+  const selectedDay = dailyUsage[selectedDayIndex];
+
+  const selectedDayShare = useMemo(() => {
+    if (!selectedDay || totalMinutes === 0) {
+      return 0;
+    }
+
+    return Math.round((selectedDay.minutes / totalMinutes) * 100);
+  }, [selectedDay, totalMinutes]);
+
+  const focusDelta = useMemo(() => {
+    if (!selectedDay) {
+      return 0;
+    }
+
+    return selectedDay.focus - averageFocus;
+  }, [averageFocus, selectedDay]);
+
+  const tabDelta = useMemo(() => {
+    if (!selectedDay) {
+      return 0;
+    }
+
+    return selectedDay.tabs - averageTabsPerPeriod;
+  }, [averageTabsPerPeriod, selectedDay]);
+
+  const dayRank = useMemo(() => {
+    const ranking = dailyUsage
+      .map((day, index) => ({ index, minutes: day.minutes }))
+      .sort((a, b) => b.minutes - a.minutes);
+
+    const foundIndex = ranking.findIndex((item) => item.index === selectedDayIndex);
+
+    return foundIndex === -1 ? 0 : foundIndex + 1;
+  }, [dailyUsage, selectedDayIndex]);
 
   const summaryMetrics = useMemo<Metric[]>(
     () => [
@@ -451,6 +501,106 @@ export default function Home() {
     ],
     [averageFocus, busiestDay, totalMinutes, totalTabs, urlVisits]
   );
+
+  const selectedDayMetrics = useMemo(() => {
+    if (!selectedDay) {
+      return [] as Metric[];
+    }
+
+    const timeframeLabel = timeframe === "week" ? "week" : "period";
+    const focusDeltaLabel =
+      focusDelta === 0
+        ? "Matched your average focus"
+        : `${focusDelta > 0 ? "+" : ""}${focusDelta}% vs range avg`;
+
+    const tabDeltaLabel =
+      tabDelta === 0
+        ? "Tabs aligned with your average"
+        : `${tabDelta > 0 ? "+" : ""}${tabDelta} vs avg ${averageTabsPerPeriod}`;
+
+    const busierThanMost = dayRank !== 0 && dayRank <= Math.ceil(totalPeriods / 2);
+
+    const intensityDetail =
+      dayRank === 0
+        ? ""
+        : busierThanMost
+        ? "Busier than most days in this range"
+        : "Calmer than the majority of days";
+
+    return [
+      {
+        label: "Active minutes",
+        value: formatDuration(selectedDay.minutes),
+        change: `${selectedDayShare}% of this ${timeframeLabel}`,
+      },
+      {
+        label: "Tabs opened",
+        value: selectedDay.tabs.toString(),
+        change: tabDeltaLabel,
+      },
+      {
+        label: "Focus score",
+        value: `${selectedDay.focus}%`,
+        change: focusDeltaLabel,
+      },
+      {
+        label: "Intensity rank",
+        value: `#${dayRank || "-"} of ${totalPeriods}`,
+        change: intensityDetail,
+      },
+    ];
+  }, [
+    averageTabsPerPeriod,
+    dayRank,
+    focusDelta,
+    selectedDay,
+    selectedDayShare,
+    tabDelta,
+    timeframe,
+    totalPeriods,
+  ]);
+
+  const selectedDayInsights = useMemo(() => {
+    if (!selectedDay) {
+      return [] as string[];
+    }
+
+    const insights: string[] = [];
+
+    if (focusDelta >= 5) {
+      insights.push("Focus surged above baseline—double down on what worked here.");
+    } else if (focusDelta <= -5) {
+      insights.push("Focus dipped below your usual level—consider a shorter session next time.");
+    } else {
+      insights.push("Focus held steady with your range average—consistency unlocked.");
+    }
+
+    if (selectedDay.tabs === busiestDay.tabs) {
+      insights.push("Highest tab load of the range—perfect moment for tab groups or bookmarks.");
+    } else if (tabDelta > 0) {
+      insights.push("Tabs crept above average—batch similar work to stay organized.");
+    } else {
+      insights.push("Lean tab load kept context switching low—nice discipline.");
+    }
+
+    if (selectedDayShare >= 25) {
+      insights.push(`A quarter of total active time happened this ${timeframe === "week" ? "day" : "week"}.`);
+    } else if (selectedDay.minutes < averageMinutesPerPeriod) {
+      insights.push("Time on browser stayed below your typical cadence.");
+    } else {
+      insights.push("Time commitment matched your normal rhythm for this range.");
+    }
+
+    return insights;
+  }, [
+    averageMinutesPerPeriod,
+    busiestDay.tabs,
+    focusDelta,
+    selectedDay,
+    selectedDayShare,
+    tabDelta,
+    timeframe,
+  ]);
 
   const usageTrendConfig = useMemo<ChartConfig>(
     () => ({
@@ -673,6 +823,21 @@ export default function Home() {
   const timeframeTag =
     timeframe === "week" ? "Weekly Chrome insights" : "Monthly Chrome insights";
 
+  const timeframeUnitLabel = timeframe === "week" ? "day" : "week";
+
+  const hasPreviousDay = selectedDayIndex > 0;
+  const hasNextDay = selectedDayIndex < dailyUsage.length - 1;
+
+  const goToPreviousDay = () => {
+    setSelectedDayIndex((current) => Math.max(0, current - 1));
+  };
+
+  const goToNextDay = () => {
+    setSelectedDayIndex((current) =>
+      Math.min(dailyUsage.length ? dailyUsage.length - 1 : 0, current + 1)
+    );
+  };
+
   return (
     <>
       <Head>
@@ -720,6 +885,95 @@ export default function Home() {
             {summaryMetrics.map((metric) => (
               <MetricCard key={metric.label} {...metric} />
             ))}
+          </section>
+
+          <section className={styles.drilldownSection} aria-label="Interactive daily drilldown">
+            <div className={styles.drilldownHeader}>
+              <div>
+                <h3>Daily drilldown</h3>
+                <p>
+                  Tap through each {timeframeUnitLabel} to compare focus, time, and tab load for the
+                  current view.
+                </p>
+              </div>
+              <div
+                className={styles.drilldownNav}
+                role="group"
+                aria-label={`Browse ${timeframeUnitLabel} summaries`}
+              >
+                <button
+                  type="button"
+                  onClick={goToPreviousDay}
+                  disabled={!hasPreviousDay}
+                  aria-label={`View previous ${timeframeUnitLabel}`}
+                >
+                  <span aria-hidden>←</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextDay}
+                  disabled={!hasNextDay}
+                  aria-label={`View next ${timeframeUnitLabel}`}
+                >
+                  <span aria-hidden>→</span>
+                </button>
+              </div>
+            </div>
+            <div className={styles.drilldownBody}>
+              <ul className={styles.drilldownList}>
+                {dailyUsage.map((day, index) => {
+                  const isActive = index === selectedDayIndex;
+
+                  return (
+                    <li key={`${day.day}-${day.date}`}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDayIndex(index)}
+                        data-active={isActive}
+                        aria-pressed={isActive}
+                      >
+                        <span className={styles.drilldownDay}>{day.day}</span>
+                        <span className={styles.drilldownDate}>{day.date}</span>
+                        <span className={styles.drilldownMinutes}>{formatDuration(day.minutes)}</span>
+                        <span className={styles.drilldownFocus}>Focus {day.focus}%</span>
+                        <span className={styles.drilldownTabs}>{day.tabs} tabs</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {selectedDay && (
+                <div className={styles.drilldownDetails}>
+                  <header className={styles.drilldownDetailsHeader}>
+                    <div>
+                      <span className={styles.drilldownDetailsLabel}>Selected {timeframeUnitLabel}</span>
+                      <h4>
+                        {selectedDay.day}
+                        <span> · {selectedDay.date}</span>
+                      </h4>
+                    </div>
+                    <span className={styles.drilldownBadge}>{formatDuration(selectedDay.minutes)}</span>
+                  </header>
+                  <div className={styles.drilldownMetrics}>
+                    {selectedDayMetrics.map((metric) => (
+                      <div key={metric.label} className={styles.drilldownMetric}>
+                        <p className={styles.drilldownMetricLabel}>{metric.label}</p>
+                        <p className={styles.drilldownMetricValue}>{metric.value}</p>
+                        <p className={styles.drilldownMetricDetail}>{metric.change}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.drilldownInsights}>
+                    <h5>Insights</h5>
+                    <ul>
+                      {selectedDayInsights.map((insight) => (
+                        <li key={insight}>{insight}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
 
           <section className={styles.visualGrid}>
