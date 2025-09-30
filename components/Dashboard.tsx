@@ -1,36 +1,45 @@
 // components/Dashboard.tsx
 "use client";
 import React, { useMemo, useState } from "react";
-import TopTable from "./TopTable";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
 import BarChart from "./BarChart";
 
-/**
- * Strongly-typed model for incoming data
- */
-type DomainStats = {
-  timeMs: number;
-  visits?: number;
-  opens?: number;
-};
+/* --------------------- types & guards --------------------- */
 
-type SummaryTopItem = {
-  domain: string;
-  timeMs: number;
-  visits?: number;
-  opens?: number;
-};
+type DomainStats = { timeMs: number; visits?: number; opens?: number };
+type SummaryTopItem = { domain: string; timeMs: number; visits?: number; opens?: number };
 
 type StatsPayload = {
   perDomain?: Record<string, DomainStats>;
   top?: SummaryTopItem[];
   totals?: Record<string, number>;
-  // allow other fields but typed as unknown so we don't rely on them
   [k: string]: unknown;
 };
 
 export type UploadEntry = {
   receivedAt: string;
-  payload: unknown; // incoming payload from disk / API — narrow with type guards below
+  payload: unknown;
 };
 
 type PerDomain = {
@@ -39,8 +48,6 @@ type PerDomain = {
   visits?: number;
   opens?: number;
 };
-
-/* --------------------- Type-guards & helpers --------------------- */
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
@@ -52,7 +59,6 @@ function isNumberLike(v: unknown): v is number {
 
 function toNumberSafe(v: unknown, fallback = 0): number {
   if (isNumberLike(v)) return v as number;
-  // allow numeric strings
   if (typeof v === "string" && v.trim() !== "") {
     const n = Number(v);
     if (Number.isFinite(n)) return n;
@@ -60,14 +66,8 @@ function toNumberSafe(v: unknown, fallback = 0): number {
   return fallback;
 }
 
-/**
- * Narrow unknown payload into StatsPayload-like structure if possible.
- * We do not mutate input.
- */
 function extractStats(obj: unknown): StatsPayload | null {
   if (!isObject(obj)) return null;
-
-  // If obj already looks like a stats shape (has perDomain or top), try to coerce
   if ("perDomain" in obj || "top" in obj || "totals" in obj) {
     const out: StatsPayload = {};
 
@@ -110,18 +110,12 @@ function extractStats(obj: unknown): StatsPayload | null {
 
     return out;
   }
-
-  // No recognizable stats fields
   return null;
 }
 
-/**
- * Produce a normalized per-domain map from a StatsPayload (supports `perDomain` or `top` shapes).
- */
 function normalizedPerDomain(stats: StatsPayload | null): Record<string, DomainStats> {
   const out: Record<string, DomainStats> = {};
   if (!stats) return out;
-
   if (stats.perDomain) {
     for (const [domain, ds] of Object.entries(stats.perDomain)) {
       out[domain] = {
@@ -132,7 +126,6 @@ function normalizedPerDomain(stats: StatsPayload | null): Record<string, DomainS
     }
     return out;
   }
-
   if (Array.isArray(stats.top)) {
     for (const item of stats.top) {
       out[item.domain] = {
@@ -142,11 +135,10 @@ function normalizedPerDomain(stats: StatsPayload | null): Record<string, DomainS
       };
     }
   }
-
   return out;
 }
 
-/* --------------------- Component --------------------- */
+/* --------------------- Dashboard component --------------------- */
 
 export default function Dashboard({ uploads }: { uploads: UploadEntry[] }) {
   const [fromDate, setFromDate] = useState<string>("");
@@ -163,8 +155,10 @@ export default function Dashboard({ uploads }: { uploads: UploadEntry[] }) {
       if (!Number.isFinite(ts)) continue;
       if (ts < fromTs || ts > toTs) continue;
 
-      // payload might be { stats: {...} } or payload itself might be stats
-      const statsCandidate: unknown = (entry.payload && isObject(entry.payload) && "stats" in entry.payload) ? (entry.payload as Record<string, unknown>).stats : entry.payload;
+      const statsCandidate: unknown =
+        entry.payload && isObject(entry.payload) && "stats" in entry.payload
+          ? (entry.payload as Record<string, unknown>).stats
+          : entry.payload;
 
       const stats = extractStats(statsCandidate);
       const perDomain = normalizedPerDomain(stats);
@@ -189,66 +183,154 @@ export default function Dashboard({ uploads }: { uploads: UploadEntry[] }) {
   function exportCSV() {
     const rows: string[][] = [
       ["domain", "timeMs", "time", "visits", "opens"],
-      ...aggregated.map(r => [r.domain, String(r.timeMs), msToHMS(r.timeMs), String(r.visits ?? 0), String(r.opens ?? 0)])
+      ...aggregated.map((r) => [
+        r.domain,
+        String(r.timeMs),
+        msToHMS(r.timeMs),
+        String(r.visits ?? 0),
+        String(r.opens ?? 0),
+      ]),
     ];
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url;
-    a.download = `chromore-aggregated-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `chromore-aggregated-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
-    <main style={{ padding:20, fontFamily:"system-ui, Arial", maxWidth:1100, margin:"0 auto" }}>
-      <h1>Chromore — Usage Dashboard</h1>
-
-      <section style={{ display:"flex", gap:12, alignItems:"center", marginTop:12 }}>
-        <div><label>From: </label><input type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} /></div>
-        <div><label>To: </label><input type="date" value={toDate} onChange={e=>setToDate(e.target.value)} /></div>
-        <div><label>Top N: </label><input type="number" min={1} max={50} value={topN} onChange={e=>setTopN(Number(e.target.value||10))} style={{ width:70 }} /></div>
-        <div style={{ marginLeft:"auto" }}><button onClick={exportCSV}>Export CSV</button></div>
-      </section>
-
-      <section style={{ display:"grid", gridTemplateColumns:"1fr 420px", gap:20, marginTop:18 }}>
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="flex items-start justify-between gap-6">
         <div>
-          <h2>Top domains (by tracked time)</h2>
-          <div style={{ border:"1px solid #eee", borderRadius:8, padding:10 }}>
-            <TopTable rows={topDomains} />
-          </div>
-          <div style={{ marginTop:12 }}>
-            <strong>Total tracked time:</strong> {msToHMS(totalTimeMs)}
-          </div>
+          <h1 className="text-2xl font-semibold">Chromore</h1>
+          <p className="text-sm text-muted-foreground mt-1">Your Chrome usage, beautifully visualized.</p>
         </div>
 
-        <div style={{ minHeight:300 }}>
-          <h2 style={{ marginTop:0 }}>Chart</h2>
-          <div style={{ height:260, border:"1px solid #eee", padding:8, borderRadius:8 }}>
-            <BarChart labels={topDomains.map(d=>d.domain)} data={topDomains.map(d=>Math.round(d.timeMs/1000))} />
-          </div>
+        <div className="flex gap-2">
+          <Button variant={"ghost"} onClick={() => { /* you can wire a refresh callback if needed */ }}>
+            Refresh
+          </Button>
+          <Button onClick={exportCSV}>Export CSV</Button>
+        </div>
+      </div>
 
-          <div style={{ marginTop:12 }}>
-            <h3 style={{ marginBottom:8 }}>Raw uploads (latest)</h3>
-            <div style={{ maxHeight:220, overflow:"auto", border:"1px solid #eee", borderRadius:6, padding:8 }}>
-              <pre style={{ fontSize:12, whiteSpace:"pre-wrap" }}>
-                {uploads.slice().reverse().slice(0,10).map(u => {
-                  const maybeStats = isObject(u.payload) && "stats" in u.payload ? (u.payload as Record<string, unknown>).stats : u.payload;
-                  const stats = extractStats(maybeStats);
-                  const summary = stats ? { totals: stats.totals, perDomainKeys: stats.perDomain ? Object.keys(stats.perDomain).length : (stats.top ? stats.top.length : 0) } : u.payload;
-                  return `${u.receivedAt} — ${JSON.stringify(summary)}`;
-                }).join("\n\n")}
-              </pre>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <Card className="col-span-2">
+          <CardHeader className="flex items-center justify-between">
+            <CardTitle>Top domains</CardTitle>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Label>From</Label>
+                <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-[140px]" />
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Label>To</Label>
+                <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-[140px]" />
+              </div>
+
+              <div>
+                <Select value={String(topN)} onValueChange={(v) => setTopN(Number(v))}>
+                  <SelectTrigger className="w-[90px]">
+                    <SelectValue placeholder="Top N" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[5, 10, 20, 50].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {`Top ${n}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
-    </main>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableCell style={{ padding: 8, textAlign: "left" }} className="w-[60%]">Domain</TableCell>
+                    <TableCell style={{ padding: 8, textAlign: "left" }}>Time</TableCell>
+                    <TableCell style={{ padding: 8, textAlign: "left" }}>Visits</TableCell>
+                    <TableCell style={{ padding: 8, textAlign: "left" }}>Opens</TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topDomains.map((r, i) => (
+                    <TableRow key={r.domain}>
+                      <TableCell className="flex items-center gap-3 py-3">
+                        <div className="font-medium">{i + 1}. {r.domain}</div>
+                      </TableCell>
+                      <TableCell>{msToHMS(r.timeMs)}</TableCell>
+                      <TableCell><Badge variant="secondary">{r.visits ?? 0}</Badge></TableCell>
+                      <TableCell><Badge variant="ghost">{r.opens ?? 0}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                  {topDomains.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8">No data in range.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-muted-foreground">Total tracked time</div>
+                <div className="text-lg font-semibold">{msToHMS(totalTimeMs)}</div>
+              </div>
+              <div className="text-sm text-muted-foreground">Domain-aggregates only — no full URLs uploaded</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Usage chart</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[320px]">
+            <div className="h-full">
+              <BarChart labels={topDomains.map((d) => d.domain)} data={topDomains.map((d) => Math.round(d.timeMs / 1000))} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Raw uploads (latest)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
+              {uploads.slice().reverse().slice(0, 10).map(u => {
+                const maybeStats = isObject(u.payload) && "stats" in u.payload ? (u.payload as Record<string, unknown>).stats : u.payload;
+                const stats = extractStats(maybeStats);
+                const summary = stats ? { totals: stats.totals, perDomainKeys: stats.perDomain ? Object.keys(stats.perDomain).length : (stats.top ? stats.top.length : 0) } : u.payload;
+                return `${u.receivedAt} — ${JSON.stringify(summary)}`;
+              }).join("\n\n")}
+            </pre>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 
 /* --------------------- small util --------------------- */
-function msToHMS(ms:number) {
-  if(!ms||ms<=0) return "0s";
-  const s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+
+function msToHMS(ms: number) {
+  if (!ms || ms <= 0) return "0s";
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
   return `${h}h ${m}m ${sec}s`;
 }
